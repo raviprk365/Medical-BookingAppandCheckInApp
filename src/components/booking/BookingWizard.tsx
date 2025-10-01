@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBookingStore } from '@/store/bookingStore';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -17,9 +17,8 @@ import { BookingForStep } from './steps/BookingForStep';
 import { PatientTypeStep } from './steps/PatientTypeStep';
 import { AppointmentReasonStep } from './steps/AppointmentReasonStep';
 import { DoctorSelectionStep } from './steps/DoctorSelectionStep';
-import { DateTimeSelectionStep } from './steps/DateTimeSelectionStep';
 import { BookingSummaryStep } from './steps/BookingSummaryStep';
-import { ConfirmationStep } from './steps/ConfirmationStep';
+import { BookingConfirmationStep } from './steps/BookingConfirmationStep';
 
 // Define the complete booking flow steps
 const BOOKING_STEPS = [
@@ -39,33 +38,36 @@ const BOOKING_STEPS = [
     component: AppointmentReasonStep
   },
   { 
-    id: 'doctor-selection', 
-    label: 'Choose Doctor', 
+    id: 'doctor-datetime-selection', 
+    label: 'Choose Doctor & Time', 
     component: DoctorSelectionStep
-  },
-  { 
-    id: 'datetime-selection', 
-    label: 'Date & Time', 
-    component: DateTimeSelectionStep
   },
   { 
     id: 'booking-summary', 
     label: 'Review Details', 
     component: BookingSummaryStep
-  },
-  { 
-    id: 'confirmation', 
-    label: 'Confirmation', 
-    component: ConfirmationStep
   }
 ];
 
 export const BookingWizard = () => {
-  const { currentStep, setCurrentStep } = useBookingStore();
+  const { currentStep, setCurrentStep, reset } = useBookingStore();
+  
+  // Reset booking state when component mounts (fresh start for each booking session)
+  useEffect(() => {
+    // Only reset if we're not in the middle of a booking flow
+    if (currentStep === 'confirmation' || !currentStep) {
+      reset();
+      setCurrentStep('booking-for');
+    }
+  }, []); // Empty dependency array means this runs once on mount
   
   // Find current step index
   const currentStepIndex = BOOKING_STEPS.findIndex(step => step.id === currentStep);
-  const progress = ((currentStepIndex + 1) / BOOKING_STEPS.length) * 100;
+  const isConfirmationStep = currentStep === 'confirmation';
+  const totalSteps = BOOKING_STEPS.length + 1; // +1 for confirmation
+  const progress = isConfirmationStep 
+    ? 100 
+    : ((currentStepIndex + 1) / totalSteps) * 100;
   const CurrentStepComponent = BOOKING_STEPS[currentStepIndex]?.component;
   
   // Navigation functions
@@ -73,6 +75,9 @@ export const BookingWizard = () => {
     const nextIndex = currentStepIndex + 1;
     if (nextIndex < BOOKING_STEPS.length) {
       setCurrentStep(BOOKING_STEPS[nextIndex].id);
+    } else {
+      // After last step, go to confirmation
+      setCurrentStep('confirmation');
     }
   };
   
@@ -148,19 +153,35 @@ export const BookingWizard = () => {
       <Card className="p-8 shadow-lg">
         <div className="mb-6 text-center">
           <h2 className="text-2xl font-bold">
-            {BOOKING_STEPS[currentStepIndex]?.label}
+            {isConfirmationStep ? 'Booking Confirmation' : BOOKING_STEPS[currentStepIndex]?.label}
           </h2>
         </div>
         
         {/* Render Current Step Component */}
         <div className="min-h-[400px]">
-          {CurrentStepComponent && (
+          {isConfirmationStep ? (
+            <BookingConfirmationStep 
+              onComplete={() => {
+                console.log('Booking process completed');
+                // Reset everything and go back to start
+                setTimeout(() => {
+                  reset();
+                  setCurrentStep('booking-for');
+                }, 2000); // Small delay to let user see confirmation
+              }}
+              goToHome={() => {
+                // Reset entire booking state and go to first step
+                reset();
+                setCurrentStep('booking-for');
+              }}
+            />
+          ) : CurrentStepComponent ? (
             <CurrentStepComponent 
               onNext={goToNextStep}
               onPrevious={goToPreviousStep}
               goToStep={goToStep}
             />
-          )}
+          ) : null}
         </div>
       </Card>
     </div>

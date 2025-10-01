@@ -1,6 +1,6 @@
 /**
- * Step 4: Doctor Selection - Choose based on specialty and availability
- * Filters doctors by specialty and shows availability
+ * Step 4: Doctor Selection with Date & Time - Combined doctor and appointment scheduling
+ * Shows doctors with integrated calendar and time slot selection
  */
 
 'use client';
@@ -9,19 +9,17 @@ import { useState, useEffect } from 'react';
 import { useBookingStore } from '@/store/bookingStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Calendar } from '@/components/ui/calendar';
 import { 
-  UserCheck, 
   Star, 
   Clock, 
-  Calendar,
-  Stethoscope,
+  Calendar as CalendarIcon,
   ArrowRight, 
   ArrowLeft,
-  Filter
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 interface DoctorSelectionStepProps {
@@ -30,329 +28,699 @@ interface DoctorSelectionStepProps {
   goToStep: (stepId: string) => void;
 }
 
-// Mock doctors data with availability
+// Mock doctors data
 const MOCK_DOCTORS = [
   {
     id: '1',
-    name: 'Dr. Sarah Johnson',
-    specialty: 'General Practice',
-    qualifications: 'MD, FRCGP',
+    name: 'Dr Sue Raju',
+    title: 'The Gut Health & Hormone Doctor',
+    specialty: 'General Practitioner',
+    gender: 'Female',
+    qualifications: 'MBChB, FRACGP',
     rating: 4.8,
     reviews: 156,
     avatar: '/api/placeholder/100/100',
-    experience: '12 years',
-    nextAvailable: '2024-03-15',
-    languages: ['English', 'Spanish'],
-    specializations: ['General Medicine', 'Preventive Care'],
-    workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
-    appointmentTypes: ['general-consultation', 'follow-up', 'physical-exam']
+    languages: ['English'],
+    description: 'Dr Sue\'s consults are privately billed, with a Medicare rebate:',
+    website: 'www.drsueraju.com.au',
+    billing: 'privately billed with Medicare rebate'
   },
   {
     id: '2',
-    name: 'Dr. Michael Chen',
-    specialty: 'Cardiology',
-    qualifications: 'MD, FACC',
-    rating: 4.9,
+    name: 'Dr Laurence Zalokar',
+    specialty: 'General Practitioner',
+    gender: 'Male',
+    qualifications: 'MBBS',
+    rating: 4.7,
     reviews: 89,
     avatar: '/api/placeholder/100/100',
-    experience: '15 years',
-    nextAvailable: '2024-03-16',
-    languages: ['English', 'Mandarin'],
-    specializations: ['Heart Disease', 'Cardiac Surgery'],
-    workingDays: ['Monday', 'Wednesday', 'Thursday', 'Friday'],
-    appointmentTypes: ['specialist-consultation', 'follow-up']
-  },
-  {
-    id: '3',
-    name: 'Dr. Emily Rodriguez',
-    specialty: 'Pediatrics',
-    qualifications: 'MD, FAAP',
-    rating: 4.7,
-    reviews: 203,
-    avatar: '/api/placeholder/100/100',
-    experience: '8 years',
-    nextAvailable: '2024-03-14',
-    languages: ['English', 'Spanish', 'Portuguese'],
-    specializations: ['Child Health', 'Vaccinations'],
-    workingDays: ['Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-    appointmentTypes: ['general-consultation', 'physical-exam', 'urgent-care']
-  },
-  {
-    id: '4',
-    name: 'Dr. James Wilson',
-    specialty: 'Dermatology',
-    qualifications: 'MD, FAAD',
-    rating: 4.6,
-    reviews: 124,
-    avatar: '/api/placeholder/100/100',
-    experience: '10 years',
-    nextAvailable: '2024-03-17',
     languages: ['English'],
-    specializations: ['Skin Cancer', 'Cosmetic Dermatology'],
-    workingDays: ['Monday', 'Tuesday', 'Thursday', 'Friday'],
-    appointmentTypes: ['specialist-consultation', 'follow-up']
+    description: 'Dr Laurence Zalokar is a bulk billing GP, his appointments are 10 minutes. Dr Laurence Zalokar does not prescribe Cannabis.',
+    billing: 'bulk billing'
   }
 ];
+
+// Generate time slots for a given date with proper availability logic
+const generateTimeSlots = (date: Date, selectedDoctor: any, appointmentDuration: number = 30) => {
+  const slots: { time: string; available: boolean; reason?: string }[] = [];
+  const dayOfWeek = date.getDay();
+  
+  // Skip weekends for this example (can be made configurable)
+  if (dayOfWeek === 0 || dayOfWeek === 6) return [];
+  
+  // Get day name for availability check
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const dayName = dayNames[dayOfWeek];
+  
+  // Find doctor in practitioners data to get real availability
+  const doctorId = selectedDoctor?.id;
+  let doctorSchedule: any = null;
+  
+  // Mock doctor schedules (in real app, this would come from API)
+  const doctorSchedules: Record<string, any> = {
+    '1': { // Dr Sue Raju
+      availability: {
+        monday: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '17:00' }],
+        tuesday: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '17:00' }],
+        wednesday: [{ start: '09:00', end: '12:00' }, { start: '15:00', end: '18:00' }],
+        thursday: [{ start: '14:00', end: '19:00' }],
+        friday: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '16:00' }],
+      },
+      breaks: [{ start: '13:00', end: '14:00' }], // Lunch break
+      existingBookings: [
+        { date: '2025-10-02', start: '09:00', duration: 30 }, // 9:00-9:30am booked
+        { date: '2025-10-02', start: '12:30', duration: 30 }, // 12:30-1:00pm booked
+        { date: '2025-10-03', start: '15:00', duration: 30 }  // 3:00-3:30pm booked
+      ]
+    },
+    '2': { // Dr Laurence Zalokar
+      availability: {
+        monday: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '16:00' }],
+        tuesday: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '16:00' }],
+        wednesday: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '17:00' }],
+        thursday: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '16:00' }],
+        friday: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '15:00' }],
+      },
+      breaks: [{ start: '12:00', end: '13:00' }], // Lunch break
+      existingBookings: [
+        { date: '2025-10-02', start: '14:30', duration: 10 }, // 2:30-2:40pm booked (10 min appt)
+        { date: '2025-10-02', start: '15:00', duration: 10 }  // 3:00-3:10pm booked
+      ]
+    }
+  };
+
+  doctorSchedule = doctorSchedules[doctorId] || doctorSchedules['1'];
+  
+  // Get doctor's availability for the day
+  const dayAvailability = doctorSchedule.availability[dayName] || [];
+  if (dayAvailability.length === 0) {
+    return []; // Doctor not available on this day
+  }
+
+  // Convert time string to minutes (e.g., "9:30" -> 570)
+  const timeToMinutes = (timeStr: string) => {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
+  // Convert minutes to time string (e.g., 570 -> "9:30 am")
+  const minutesToTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    const period = hours >= 12 ? 'pm' : 'am';
+    const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
+    return `${displayHours}:${mins.toString().padStart(2, '0')} ${period}`;
+  };
+
+  // Get date string for booking comparison
+  const dateStr = date.toISOString().split('T')[0];
+
+  // Generate slots for each availability window
+  for (const window of dayAvailability) {
+    const startMinutes = timeToMinutes(window.start);
+    const endMinutes = timeToMinutes(window.end);
+    
+    // Generate slots at intervals based on appointment duration, but minimum 15 minutes
+    // This ensures proper spacing between appointments and prevents overlaps
+    const slotInterval = Math.max(15, appointmentDuration === 30 ? 30 : 15);
+    
+    for (let currentTime = startMinutes; currentTime + appointmentDuration <= endMinutes; currentTime += slotInterval) {
+      const slotEndTime = currentTime + appointmentDuration;
+      let isAvailable = true;
+      let reason = '';
+
+      // Check if slot conflicts with doctor's breaks
+      for (const breakTime of doctorSchedule.breaks) {
+        const breakStart = timeToMinutes(breakTime.start);
+        const breakEnd = timeToMinutes(breakTime.end);
+        
+        // If appointment starts before break ends AND ends after break starts = conflict
+        if (currentTime < breakEnd && slotEndTime > breakStart) {
+          isAvailable = false;
+          reason = 'Doctor break';
+          break;
+        }
+      }
+
+      // Check if slot conflicts with existing bookings for this specific date
+      if (isAvailable) {
+        for (const booking of doctorSchedule.existingBookings) {
+          if (booking.date === dateStr) {
+            const bookingStart = timeToMinutes(booking.start);
+            const bookingEnd = bookingStart + booking.duration;
+            
+            // If new appointment overlaps with existing booking
+            if (currentTime < bookingEnd && slotEndTime > bookingStart) {
+              isAvailable = false;
+              reason = 'Already booked';
+              break;
+            }
+          }
+        }
+      }
+
+      // Add buffer time (5 minutes) between appointments
+      if (isAvailable) {
+        for (const booking of doctorSchedule.existingBookings) {
+          if (booking.date === dateStr) {
+            const bookingStart = timeToMinutes(booking.start);
+            const bookingEnd = bookingStart + booking.duration;
+            
+            // Check if there's at least 5 minutes gap
+            if ((currentTime >= bookingEnd && currentTime < bookingEnd + 5) ||
+                (slotEndTime > bookingStart - 5 && slotEndTime <= bookingStart)) {
+              isAvailable = false;
+              reason = 'Insufficient gap between appointments';
+              break;
+            }
+          }
+        }
+      }
+
+      // Check if appointment would run past the availability window
+      if (isAvailable && slotEndTime > endMinutes) {
+        isAvailable = false;
+        reason = 'Insufficient time in availability window';
+      }
+
+      slots.push({
+        time: minutesToTime(currentTime),
+        available: isAvailable,
+        reason: !isAvailable ? reason : undefined
+      });
+    }
+  }
+
+  // Return only available slots, but keep unavailable for "see all times" view
+  return slots;
+};
+
+// Async version that fetches real appointments from database
+const generateTimeSlotsAsync = async (date: Date, selectedDoctor: any, appointmentDuration: number = 30) => {
+  const slots: { time: string; available: boolean; reason?: string }[] = [];
+  const dayOfWeek = date.getDay();
+  
+  // Skip weekends for this example (can be made configurable)
+  if (dayOfWeek === 0 || dayOfWeek === 6) return [];
+  
+  // Get day name for availability check
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const dayName = dayNames[dayOfWeek];
+  
+  // Find doctor in practitioners data to get real availability
+  const doctorId = selectedDoctor?.id;
+  let doctorSchedule: any = null;
+  
+  // Mock doctor schedules (in real app, this would come from API)
+  const doctorSchedules: Record<string, any> = {
+    '1': { // Dr Sue Raju
+      availability: {
+        monday: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '17:00' }],
+        tuesday: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '17:00' }],
+        wednesday: [{ start: '09:00', end: '12:00' }, { start: '15:00', end: '18:00' }],
+        thursday: [{ start: '14:00', end: '19:00' }],
+        friday: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '16:00' }],
+      },
+      breaks: [{ start: '13:00', end: '14:00' }], // Lunch break
+    },
+    '2': { // Dr Laurence Zalokar
+      availability: {
+        monday: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '16:00' }],
+        tuesday: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '16:00' }],
+        wednesday: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '17:00' }],
+        thursday: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '16:00' }],
+        friday: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '15:00' }],
+      },
+      breaks: [{ start: '12:00', end: '13:00' }], // Lunch break
+    }
+  };
+
+  doctorSchedule = doctorSchedules[doctorId] || doctorSchedules['1'];
+  
+  // Get doctor's availability for the day
+  const dayAvailability = doctorSchedule.availability[dayName] || [];
+  if (dayAvailability.length === 0) {
+    return []; // Doctor not available on this day
+  }
+
+  // Fetch real appointments from API for this doctor and date
+  let existingBookings: any[] = [];
+  try {
+    const dateStr = date.toISOString().split('T')[0];
+    const response = await fetch(`/api/appointments?practitionerId=${doctorId}&date=${dateStr}`);
+    if (response.ok) {
+      existingBookings = await response.json();
+      console.log('Fetched existing bookings for', doctorId, 'on', dateStr, ':', existingBookings);
+    }
+  } catch (error) {
+    console.error('Failed to fetch appointments:', error);
+    // Continue with empty bookings array
+  }
+
+  // Convert time string to minutes (e.g., "9:30" -> 570)
+  const timeToMinutes = (timeStr: string) => {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
+  // Convert minutes to time string (e.g., 570 -> "9:30 am")
+  const minutesToTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    const period = hours >= 12 ? 'pm' : 'am';
+    const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
+    return `${displayHours}:${mins.toString().padStart(2, '0')} ${period}`;
+  };
+
+  // Parse appointment time string to minutes (handles both "9:00 am" and "09:00" formats)
+  const parseAppointmentTime = (timeStr: string) => {
+    const lowerTime = timeStr.toLowerCase().trim();
+    
+    if (lowerTime.includes('am') || lowerTime.includes('pm')) {
+      // Format: "9:00 am" or "2:30 pm"
+      const [timeOnly, period] = lowerTime.split(' ');
+      let [hours, minutes] = timeOnly.split(':').map(Number);
+      
+      if (period === 'pm' && hours !== 12) {
+        hours += 12;
+      } else if (period === 'am' && hours === 12) {
+        hours = 0;
+      }
+      
+      return hours * 60 + minutes;
+    } else {
+      // Format: "09:00" or "14:30"
+      const [hours, minutes] = lowerTime.split(':').map(Number);
+      return hours * 60 + minutes;
+    }
+  };
+
+  // Generate slots for each availability window
+  for (const window of dayAvailability) {
+    const startMinutes = timeToMinutes(window.start);
+    const endMinutes = timeToMinutes(window.end);
+    
+    // Generate slots at intervals based on appointment duration, but minimum 15 minutes
+    // This ensures proper spacing between appointments and prevents overlaps
+    const slotInterval = Math.max(15, appointmentDuration === 30 ? 30 : 15);
+    
+    for (let currentTime = startMinutes; currentTime + appointmentDuration <= endMinutes; currentTime += slotInterval) {
+      const slotEndTime = currentTime + appointmentDuration;
+      let isAvailable = true;
+      let reason = '';
+
+      // Check if slot conflicts with doctor's breaks
+      for (const breakTime of doctorSchedule.breaks) {
+        const breakStart = timeToMinutes(breakTime.start);
+        const breakEnd = timeToMinutes(breakTime.end);
+        
+        // If appointment starts before break ends AND ends after break starts = conflict
+        if (currentTime < breakEnd && slotEndTime > breakStart) {
+          isAvailable = false;
+          reason = 'Doctor break';
+          break;
+        }
+      }
+
+      // Check if slot conflicts with existing bookings from database
+      if (isAvailable) {
+        for (const booking of existingBookings) {
+          try {
+            const bookingStart = parseAppointmentTime(booking.appointmentTime);
+            const bookingEnd = bookingStart + booking.duration;
+            
+            // If new appointment overlaps with existing booking
+            if (currentTime < bookingEnd && slotEndTime > bookingStart) {
+              isAvailable = false;
+              reason = `Already booked (${booking.appointmentTime})`;
+              break;
+            }
+          } catch (error) {
+            console.error('Error parsing appointment time:', booking.appointmentTime, error);
+          }
+        }
+      }
+
+      // Add buffer time (5 minutes) between appointments
+      if (isAvailable) {
+        for (const booking of existingBookings) {
+          try {
+            const bookingStart = parseAppointmentTime(booking.appointmentTime);
+            const bookingEnd = bookingStart + booking.duration;
+            
+            // Check if there's at least 5 minutes gap
+            if ((currentTime >= bookingEnd && currentTime < bookingEnd + 5) ||
+                (slotEndTime > bookingStart - 5 && slotEndTime <= bookingStart)) {
+              isAvailable = false;
+              reason = 'Insufficient gap between appointments';
+              break;
+            }
+          } catch (error) {
+            console.error('Error parsing appointment time for buffer check:', booking.appointmentTime, error);
+          }
+        }
+      }
+
+      // Check if appointment would run past the availability window
+      if (isAvailable && slotEndTime > endMinutes) {
+        isAvailable = false;
+        reason = 'Insufficient time in availability window';
+      }
+
+      slots.push({
+        time: minutesToTime(currentTime),
+        available: isAvailable,
+        reason: !isAvailable ? reason : undefined
+      });
+    }
+  }
+
+  // Return all slots (both available and unavailable)
+  return slots;
+};
+
+// Get next few days for calendar
+const getNextDays = (startDate: Date, days: number) => {
+  const dates = [];
+  for (let i = 0; i < days; i++) {
+    const date = new Date(startDate);
+    date.setDate(date.getDate() + i);
+    dates.push(date);
+  }
+  return dates;
+};
 
 export const DoctorSelectionStep = ({ onNext, onPrevious }: DoctorSelectionStepProps) => {
   const { bookingData, updateBookingData } = useBookingStore();
   const [selectedDoctorId, setSelectedDoctorId] = useState(bookingData.practitionerId || '');
-  const [doctorPreference, setDoctorPreference] = useState(bookingData.doctorPreference || 'any');
-  const [filteredDoctors, setFilteredDoctors] = useState(MOCK_DOCTORS);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedTime, setSelectedTime] = useState(bookingData.selectedTime || '');
+  const [availableSlots, setAvailableSlots] = useState<any[]>([]);
+  const [calendarStartDate, setCalendarStartDate] = useState(new Date());
+  const [showAllTimes, setShowAllTimes] = useState(false);
 
-  // Filter doctors based on appointment type and specialty
+  const selectedDoctor = MOCK_DOCTORS.find(doc => doc.id === selectedDoctorId);
+
+  // Generate available time slots when doctor or date changes
   useEffect(() => {
-    let doctors = MOCK_DOCTORS;
-
-    // Filter by appointment type compatibility
-    if (bookingData.appointmentType) {
-      doctors = doctors.filter(doctor => 
-        doctor.appointmentTypes.includes(bookingData.appointmentType)
-      );
-    }
-
-    // If specialist consultation, filter by specialty
-    if (bookingData.appointmentType === 'specialist-consultation' && bookingData.specialtyRequired) {
-      doctors = doctors.filter(doctor => 
-        doctor.specialty.toLowerCase().includes(bookingData.specialtyRequired.toLowerCase())
-      );
-    }
-
-    setFilteredDoctors(doctors);
-  }, [bookingData.appointmentType, bookingData.specialtyRequired]);
-
-  // Handle doctor preference change
-  const handlePreferenceChange = (value: string) => {
-    setDoctorPreference(value);
-    updateBookingData({ doctorPreference: value as 'any' | 'specific' });
-    if (value === 'any') {
-      setSelectedDoctorId('');
-      updateBookingData({ practitionerId: null });
-    }
-  };
+    const loadTimeSlots = async () => {
+      if (selectedDoctorId && selectedDate) {
+        const duration = bookingData.duration || 30; // Get duration from booking data
+        const slots = await generateTimeSlotsAsync(selectedDate, selectedDoctor, duration);
+        setAvailableSlots(slots);
+      }
+    };
+    
+    loadTimeSlots();
+  }, [selectedDoctorId, selectedDate, selectedDoctor, bookingData.duration]);
 
   // Handle doctor selection
   const handleDoctorSelect = (doctorId: string) => {
     setSelectedDoctorId(doctorId);
-    const selectedDoctor = filteredDoctors.find(doc => doc.id === doctorId);
+    setSelectedTime(''); // Reset time when doctor changes
+    setShowAllTimes(false); // Reset show all times
     updateBookingData({ 
       practitionerId: doctorId,
-      doctorPreference: 'specific'
+      selectedTime: ''
     });
-    
-    if (selectedDoctor) {
-      updateBookingData({
-        specialtyRequired: selectedDoctor.specialty
-      });
-    }
   };
 
-  // Calculate availability slots for next few days
-  const calculateAvailability = (doctor: any) => {
-    const today = new Date();
-    const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-    
-    // Mock availability calculation
-    const availableDays = doctor.workingDays.length;
-    const appointmentDuration = bookingData.duration || 30;
-    const slotsPerDay = Math.floor((8 * 60) / appointmentDuration); // 8 hour workday
-    
-    return {
-      nextAvailable: doctor.nextAvailable,
-      slotsThisWeek: availableDays * slotsPerDay * 0.6, // 60% availability
-      urgencyCompatible: bookingData.urgency === 'routine' || doctor.appointmentTypes.includes('urgent-care')
-    };
+  // Handle date selection
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date);
+    setSelectedTime(''); // Reset time when date changes
+    setShowAllTimes(false); // Reset show all times
+    updateBookingData({ 
+      appointmentDate: date.toISOString().split('T')[0], // Store as date string
+      selectedTime: ''
+    });
+  };
+
+  // Handle time selection
+  const handleTimeSelect = (time: string) => {
+    setSelectedTime(time);
+    updateBookingData({ selectedTime: time });
+  };
+
+  // Navigate calendar
+  const navigateCalendar = (direction: 'prev' | 'next') => {
+    const newDate = new Date(calendarStartDate);
+    newDate.setDate(newDate.getDate() + (direction === 'next' ? 5 : -5));
+    setCalendarStartDate(newDate);
   };
 
   // Validate and proceed
   const handleNext = () => {
-    if (doctorPreference === 'specific' && !selectedDoctorId) {
-      alert('Please select a specific doctor');
+    if (!selectedDoctorId) {
+      alert('Please select a doctor');
+      return;
+    }
+
+    if (!selectedDate) {
+      alert('Please select a date');
+      return;
+    }
+
+    if (!selectedTime) {
+      alert('Please select a time slot');
       return;
     }
 
     onNext();
   };
 
-  const selectedDoctor = filteredDoctors.find(doc => doc.id === selectedDoctorId);
+  const calendarDays = getNextDays(calendarStartDate, 5);
 
   return (
     <div className="space-y-6">
-      {/* Doctor Preference */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <UserCheck className="w-5 h-5" />
-            Doctor Preference
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <RadioGroup value={doctorPreference} onValueChange={handlePreferenceChange}>
-            <div className="space-y-3">
-              <div className="flex items-center space-x-3">
-                <RadioGroupItem value="any" id="any-doctor" />
-                <Label htmlFor="any-doctor" className="cursor-pointer flex-1">
-                  <div className="p-3 rounded-lg border hover:bg-muted/50">
-                    <div className="font-medium">Any Available Doctor</div>
-                    <p className="text-sm text-muted-foreground">
-                      Book with the first available doctor for your appointment type
-                    </p>
-                  </div>
-                </Label>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <RadioGroupItem value="specific" id="specific-doctor" />
-                <Label htmlFor="specific-doctor" className="cursor-pointer flex-1">
-                  <div className="p-3 rounded-lg border hover:bg-muted/50">
-                    <div className="font-medium">Choose Specific Doctor</div>
-                    <p className="text-sm text-muted-foreground">
-                      Select a particular doctor based on specialty and preferences
-                    </p>
-                  </div>
-                </Label>
-              </div>
-            </div>
-          </RadioGroup>
-        </CardContent>
-      </Card>
+      {/* Doctors List */}
+      <div className="space-y-4">
+        {MOCK_DOCTORS.map((doctor) => (
+          <Card
+            key={doctor.id}
+            className={`cursor-pointer border-2 transition-all duration-200 ${
+              selectedDoctorId === doctor.id 
+                ? 'border-primary bg-primary/5 shadow-md' 
+                : 'border-muted hover:border-primary/50'
+            }`}
+            onClick={() => handleDoctorSelect(doctor.id)}
+          >
+            <CardContent className="p-6">
+              <div className="flex justify-between items-start">
+                {/* Doctor Info */}
+                <div className="flex items-start gap-4 flex-1">
+                  <Avatar className="w-16 h-16">
+                    <AvatarImage src={doctor.avatar} alt={doctor.name} />
+                    <AvatarFallback>
+                      {doctor.name.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
 
-      {/* Doctor Selection (when specific preference is selected) */}
-      {doctorPreference === 'specific' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Stethoscope className="w-5 h-5" />
-              Available Doctors
-              <Badge variant="secondary" className="ml-auto">
-                {filteredDoctors.length} doctors available
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {filteredDoctors.map((doctor) => {
-                const availability = calculateAvailability(doctor);
-                return (
-                  <Card
-                    key={doctor.id}
-                    className={`p-4 cursor-pointer border-2 hover:border-primary transition-colors ${
-                      selectedDoctorId === doctor.id ? 'border-primary bg-primary/5' : ''
-                    }`}
-                    onClick={() => handleDoctorSelect(doctor.id)}
-                  >
-                    <div className="flex items-start gap-4">
-                      {/* Doctor Avatar */}
-                      <Avatar className="w-16 h-16">
-                        <AvatarImage src={doctor.avatar} alt={doctor.name} />
-                        <AvatarFallback>
-                          {doctor.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Button
+                        variant={selectedDoctorId === doctor.id ? "default" : "default"}
+                        size="sm"
+                        className="text-xs bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        Book appointment
+                      </Button>
+                    </div>
+                    
+                    <h3 className="text-lg font-semibold mb-1">
+                      {doctor.name} {doctor.title && `(${doctor.title})`}
+                    </h3>
+                    
+                    <p className="text-sm text-muted-foreground mb-2">
+                      {doctor.specialty}, {doctor.gender}, {doctor.qualifications}
+                    </p>
+                    
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Speaks {doctor.languages.join(', ')}
+                    </p>
 
-                      {/* Doctor Info */}
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h4 className="text-lg font-semibold">{doctor.name}</h4>
-                            <p className="text-muted-foreground">{doctor.qualifications}</p>
-                            <div className="flex items-center gap-4 mt-2">
-                              <Badge variant="outline">{doctor.specialty}</Badge>
-                              <div className="flex items-center gap-1">
-                                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                <span className="text-sm font-medium">{doctor.rating}</span>
-                                <span className="text-sm text-muted-foreground">
-                                  ({doctor.reviews} reviews)
-                                </span>
+                    {doctor.website && (
+                      <p className="text-sm text-muted-foreground mb-2">
+                        To find out more about {doctor.name.split(' ')[1]}, visit {doctor.website}
+                      </p>
+                    )}
+
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {doctor.description}
+                    </p>
+
+                    <button 
+                      className="text-blue-600 text-sm hover:underline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Handle read more functionality
+                        console.log('Read more clicked for', doctor.name);
+                      }}
+                    >
+                      Read more
+                    </button>
+                  </div>
+                </div>
+
+                {/* Calendar Section - Only show for selected doctor */}
+                {selectedDoctorId === doctor.id && (
+                  <div className="ml-6 min-w-[400px]">
+                    {/* Calendar Header with Date Navigation */}
+                    <div className="flex items-center justify-between mb-4">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigateCalendar('prev');
+                        }}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      
+                      <div className="flex gap-1">
+                        {calendarDays.map((date, index) => {
+                          const isToday = date.toDateString() === new Date().toDateString();
+                          const isSelected = selectedDate.toDateString() === date.toDateString();
+                          
+                          return (
+                            <div
+                              key={index}
+                              className={`text-center cursor-pointer p-2 rounded-md transition-colors min-w-[60px] ${
+                                isSelected
+                                  ? 'bg-green-600 text-white'
+                                  : isToday
+                                  ? 'bg-gray-100 border'
+                                  : 'hover:bg-muted'
+                              }`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDateSelect(date);
+                              }}
+                            >
+                              <div className="text-xs font-medium">
+                                {isToday ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short' })}
+                              </div>
+                              <div className="text-sm font-medium">
+                                {date.getDate()} {date.toLocaleDateString('en-US', { month: 'short' })}
                               </div>
                             </div>
-                          </div>
+                          );
+                        })}
+                      </div>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigateCalendar('next');
+                        }}
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
 
-                          {/* Availability Info */}
-                          <div className="text-right">
-                            <div className="flex items-center gap-1 text-sm">
-                              <Calendar className="w-4 h-4" />
-                              <span>Next: {new Date(availability.nextAvailable).toLocaleDateString()}</span>
+                    {/* Available Times Section */}
+                    {selectedDate && (
+                      <div>
+                        <div className="mb-3">
+                          <h4 className="font-medium text-sm">Available Times</h4>
+                          <p className="text-xs text-muted-foreground">
+                            Showing slots for {bookingData.duration || 30} minute appointment
+                          </p>
+                        </div>
+                        
+                        {availableSlots.length > 0 ? (
+                          <div>
+                            <div className="grid grid-cols-2 gap-2">
+                              {(showAllTimes ? availableSlots : availableSlots.filter(slot => slot.available).slice(0, 6))
+                                .map((slot, index) => (
+                                <Button
+                                  key={index}
+                                  variant={selectedTime === slot.time ? "default" : "outline"}
+                                  size="sm"
+                                  disabled={!slot.available}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (slot.available) {
+                                      handleTimeSelect(slot.time);
+                                    }
+                                  }}
+                                  className={`justify-center text-sm ${
+                                    selectedTime === slot.time 
+                                      ? 'bg-green-600 hover:bg-green-700 text-white' 
+                                      : slot.available
+                                      ? 'hover:bg-gray-50'
+                                      : 'opacity-50 cursor-not-allowed bg-gray-100 text-gray-400 hover:bg-gray-100'
+                                  }`}
+                                  title={slot.available ? undefined : slot.reason}
+                                >
+                                  {slot.time}
+                                  {!slot.available && showAllTimes && (
+                                    <span className="text-xs ml-1">❌</span>
+                                  )}
+                                </Button>
+                              ))}
                             </div>
-                            <div className="flex items-center gap-1 text-sm mt-1">
-                              <Clock className="w-4 h-4" />
-                              <span>{Math.floor(availability.slotsThisWeek)} slots this week</span>
-                            </div>
-                            {availability.urgencyCompatible && (
-                              <Badge className="mt-2 bg-green-100 text-green-800" variant="secondary">
-                                Urgent appointments available
-                              </Badge>
+
+                            {/* See all times button */}
+                            {!showAllTimes && availableSlots.filter(slot => slot.available).length > 6 && (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                className="w-full mt-3 bg-green-600 hover:bg-green-700 text-white"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setShowAllTimes(true);
+                                }}
+                              >
+                                see all times ▼
+                              </Button>
+                            )}
+
+                            {/* Show fewer times button */}
+                            {showAllTimes && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full mt-3"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setShowAllTimes(false);
+                                }}
+                              >
+                                show less ▲
+                              </Button>
+                            )}
+
+                            {/* Legend for disabled slots */}
+                            {showAllTimes && availableSlots.some(slot => !slot.available) && (
+                              <div className="mt-3 p-2 bg-gray-50 rounded text-xs">
+                                <p className="font-medium text-gray-700 mb-1">Legend:</p>
+                                <p className="text-gray-600">❌ = Unavailable (booked, break, or insufficient time)</p>
+                              </div>
                             )}
                           </div>
-                        </div>
-
-                        {/* Specializations */}
-                        <div className="mt-3">
-                          <p className="text-sm font-medium">Specializations:</p>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {doctor.specializations.map((spec, index) => (
-                              <Badge key={index} variant="secondary" className="text-xs">
-                                {spec}
-                              </Badge>
-                            ))}
+                        ) : (
+                          <div className="text-center py-4">
+                            <p className="text-sm text-muted-foreground">
+                              No available slots for this date
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Try selecting a different date
+                            </p>
                           </div>
-                        </div>
-
-                        {/* Languages and Experience */}
-                        <div className="flex items-center gap-6 mt-3 text-sm text-muted-foreground">
-                          <div>
-                            <span className="font-medium">Experience:</span> {doctor.experience}
-                          </div>
-                          <div>
-                            <span className="font-medium">Languages:</span> {doctor.languages.join(', ')}
-                          </div>
-                        </div>
+                        )}
                       </div>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Selected Doctor Summary */}
-      {selectedDoctor && (
-        <Card className="bg-primary/5 border-primary/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <Avatar className="w-12 h-12">
-                <AvatarImage src={selectedDoctor.avatar} alt={selectedDoctor.name} />
-                <AvatarFallback>
-                  {selectedDoctor.name.split(' ').map(n => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h5 className="font-semibold">Selected: {selectedDoctor.name}</h5>
-                <p className="text-sm text-muted-foreground">
-                  {selectedDoctor.specialty} • Next available: {new Date(calculateAvailability(selectedDoctor).nextAvailable).toLocaleDateString()}
-                </p>
+                    )}
+                  </div>
+                )}
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* No doctors message */}
-      {filteredDoctors.length === 0 && (
-        <Card className="p-8 text-center">
-          <div className="flex flex-col items-center gap-4">
-            <Filter className="w-12 h-12 text-muted-foreground" />
-            <div>
-              <h4 className="font-semibold">No doctors available</h4>
-              <p className="text-muted-foreground">
-                No doctors match your appointment type and requirements. Please go back and adjust your selections.
-              </p>
-            </div>
-          </div>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       {/* Navigation */}
       <div className="flex justify-between pt-6">
@@ -364,7 +732,7 @@ export const DoctorSelectionStep = ({ onNext, onPrevious }: DoctorSelectionStepP
         <Button 
           onClick={handleNext}
           className="flex items-center gap-2"
-          disabled={doctorPreference === 'specific' && !selectedDoctorId}
+          disabled={!selectedDoctorId || !selectedDate || !selectedTime}
         >
           Continue
           <ArrowRight className="w-4 h-4" />

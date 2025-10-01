@@ -13,6 +13,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useToast } from '@/components/providers/ToastProvider';
+import bookingService from '@/services/bookingService';
 import { 
   User, 
   Clock, 
@@ -34,11 +38,14 @@ interface BookingSummaryStepProps {
 
 export const BookingSummaryStep = ({ onNext, onPrevious, goToStep }: BookingSummaryStepProps) => {
   const { bookingData, updateBookingData } = useBookingStore();
+  const { toast } = useToast();
   const [additionalNotes, setAdditionalNotes] = useState(bookingData.notes || '');
   const [medications, setMedications] = useState(bookingData.medications || '');
   const [allergies, setAllergies] = useState(bookingData.allergies || '');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   // Mock doctor data (in real app, this would come from API)
   const doctorData = {
@@ -57,12 +64,40 @@ export const BookingSummaryStep = ({ onNext, onPrevious, goToStep }: BookingSumm
 
   // Format appointment date and time
   const formatDateTime = () => {
-    if (!bookingData.selectedDate || !bookingData.selectedTime) return '';
+    if ((!bookingData.appointmentDate && !bookingData.selectedDate) || !bookingData.selectedTime) {
+      return { date: 'Not selected', time: 'Not selected' };
+    }
     
-    const date = new Date(bookingData.selectedDate);
-    const [hours, minutes] = bookingData.selectedTime.split(':');
-    date.setHours(parseInt(hours), parseInt(minutes));
+    // Use appointmentDate if available, otherwise fall back to selectedDate
+    const dateStr = bookingData.appointmentDate || bookingData.selectedDate;
+    if (!dateStr) {
+      return { date: 'Not selected', time: 'Not selected' };
+    }
     
+    const date = new Date(dateStr);
+    
+    // Parse time from selectedTime (e.g., "1:10 pm" or "13:10")
+    const timeStr = bookingData.selectedTime.toLowerCase();
+    let [hours, minutes] = [0, 0];
+    
+    if (timeStr.includes(':')) {
+      if (timeStr.includes('am') || timeStr.includes('pm')) {
+        // Format: "1:10 pm"
+        const [timeOnly, period] = timeStr.split(' ');
+        [hours, minutes] = timeOnly.split(':').map(Number);
+        
+        if (period === 'pm' && hours !== 12) {
+          hours += 12;
+        } else if (period === 'am' && hours === 12) {
+          hours = 0;
+        }
+      } else {
+        // Format: "13:10"
+        [hours, minutes] = timeStr.split(':').map(Number);
+      }
+    }
+    
+    date.setHours(hours, minutes);
     const endTime = new Date(date.getTime() + (bookingData.duration || 30) * 60000);
     
     return {
@@ -107,13 +142,61 @@ export const BookingSummaryStep = ({ onNext, onPrevious, goToStep }: BookingSumm
   };
 
   // Validate and proceed to confirmation
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!termsAccepted || !privacyAccepted) {
-      alert('Please accept the terms and conditions and privacy policy to proceed.');
+      setSubmitError('Please accept the terms and conditions and privacy policy to proceed.');
       return;
     }
 
-    onNext();
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      // Update booking data with final notes
+      const finalBookingData = {
+        ...bookingData,
+        notes: additionalNotes,
+        medications,
+        allergies
+      };
+      
+      updateBookingData({ notes: additionalNotes, medications, allergies });
+
+      // Submit booking to database
+      const result = await bookingService.completeBooking(finalBookingData);
+      
+      // Update booking data with confirmation details
+      updateBookingData({
+        confirmed: true,
+        confirmationCode: result.appointment.confirmationCode,
+        bookingId: result.appointment.id,
+        patientId: result.patient.id
+      });
+
+      // Show success toast
+      toast.success(
+        'Booking Confirmed!', 
+        `Your appointment is confirmed for ${dateTime.date} at ${bookingData.selectedTime}. Confirmation code: ${result.appointment.confirmationCode}`
+      );
+
+      console.log('Booking completed successfully:', result);
+      onNext();
+    } catch (error) {
+      console.error('Booking submission failed:', error);
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Failed to complete booking. Please try again.';
+      
+      setSubmitError(errorMessage);
+      
+      // Show error toast
+      toast.error(
+        'Booking Failed', 
+        errorMessage
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const dateTime = formatDateTime();
@@ -242,7 +325,7 @@ export const BookingSummaryStep = ({ onNext, onPrevious, goToStep }: BookingSumm
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => goToStep('datetime-selection')}
+              onClick={() => goToStep('doctor-datetime-selection')}
               className="ml-auto"
             >
               <Edit className="w-4 h-4 mr-1" />
@@ -358,7 +441,7 @@ export const BookingSummaryStep = ({ onNext, onPrevious, goToStep }: BookingSumm
               <Checkbox 
                 id="terms" 
                 checked={termsAccepted}
-                onCheckedChange={setTermsAccepted}
+                onCheckedChange={(checked) => setTermsAccepted(checked === true)}
               />
               <Label htmlFor="terms" className="text-sm leading-relaxed">
                 I agree to the{' '}
@@ -372,7 +455,7 @@ export const BookingSummaryStep = ({ onNext, onPrevious, goToStep }: BookingSumm
               <Checkbox 
                 id="privacy" 
                 checked={privacyAccepted}
-                onCheckedChange={setPrivacyAccepted}
+                onCheckedChange={(checked) => setPrivacyAccepted(checked === true)}
               />
               <Label htmlFor="privacy" className="text-sm leading-relaxed">
                 I consent to the collection and use of my personal health information 
@@ -384,6 +467,13 @@ export const BookingSummaryStep = ({ onNext, onPrevious, goToStep }: BookingSumm
         </CardContent>
       </Card>
 
+      {/* Error Alert */}
+      {submitError && (
+        <Alert variant="destructive">
+          <AlertDescription>{submitError}</AlertDescription>
+        </Alert>
+      )}
+
       {/* Navigation */}
       <div className="flex justify-between pt-6">
         <Button variant="outline" onClick={onPrevious} className="flex items-center gap-2">
@@ -394,10 +484,10 @@ export const BookingSummaryStep = ({ onNext, onPrevious, goToStep }: BookingSumm
         <Button 
           onClick={handleConfirm}
           className="flex items-center gap-2"
-          disabled={!termsAccepted || !privacyAccepted}
+          disabled={!termsAccepted || !privacyAccepted || isSubmitting}
         >
           <CheckCircle className="w-4 h-4" />
-          Confirm Booking
+          {isSubmitting ? 'Processing...' : 'Confirm Booking'}
           <ArrowRight className="w-4 h-4" />
         </Button>
       </div>

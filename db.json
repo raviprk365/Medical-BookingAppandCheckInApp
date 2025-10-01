@@ -1,4 +1,205 @@
 {
+  "patients": [
+    {
+      "id": "patient-1",
+      "firstName": "John",
+      "lastName": "Doe",
+      "dateOfBirth": "1990-05-15",
+      "phone": "+61234567890",
+      "email": "john.doe@example.com",
+      "address": "123 Main Street, Downtown, Sydney 2000",
+      "emergencyContact": {
+        "name": "Jane Doe",
+        "phone": "+61234567891",
+        "relationship": "Spouse"
+      },
+      "medicalHistory": {
+        "allergies": "",
+        "medications": "",
+        "conditions": []
+      },
+      "createdAt": "2024-01-15T10:30:00Z",
+      "updatedAt": "2025-10-01T09:07:43.086Z"
+    },
+    {
+      "id": "patient-2",
+      "firstName": "Sarah",
+      "lastName": "Johnson",
+      "dateOfBirth": "1985-08-22",
+      "phone": "+61234567892",
+      "email": "sarah.johnson@example.com",
+      "address": "456 Oak Avenue, Bondi Beach 2026",
+      "emergencyContact": {
+        "name": "Michael Johnson",
+        "phone": "+61234567893",
+        "relationship": "Husband"
+      },
+      "medicalHistory": {
+        "allergies": "",
+        "medications": "",
+        "conditions": []
+      },
+      "createdAt": "2024-02-10T14:20:00Z",
+      "updatedAt": "2025-10-01T08:50:08.552Z"
+    },
+    {
+      "id": "patient-3",
+      "firstName": "Michael",
+      "lastName": "Chen",
+      "dateOfBirth": "1978-12-03",
+      "phone": "+61234567894",
+      "email": "michael.chen@example.com",
+      "address": "789 Pine Street, Parramatta 2150",
+      "emergencyContact": {
+        "name": "Lisa Chen",
+        "phone": "+61234567895",
+        "relationship": "Wife"
+      },
+      "medicalHistory": {
+        "allergies": "Shellfish, Peanuts",
+        "medications": "Metformin 500mg twice daily",
+        "conditions": [
+          "Type 2 Diabetes"
+        ]
+      },
+      "createdAt": "2024-03-05T09:15:00Z",
+      "updatedAt": "2024-03-05T09:15:00Z"
+    }
+  ],
+  "appointments": [
+    {
+      "id": "apt-1",
+      "patientId": "patient-1",
+      "practitionerId": "prac-1",
+      "clinicId": "clinic-1",
+      "appointmentDate": "2025-10-02",
+      "appointmentTime": "9:00 am",
+      "duration": 30,
+      "appointmentType": "general-consultation",
+      "reason": "Annual check-up",
+      "urgency": "routine",
+      "status": "confirmed",
+      "notes": "Patient requests blood pressure check",
+      "medications": "Lisinopril 10mg daily",
+      "allergies": "Penicillin",
+      "symptoms": "None",
+      "bookingFor": "myself",
+      "relationship": "",
+      "confirmationCode": "APT001",
+      "createdAt": "2025-10-01T10:00:00Z",
+      "updatedAt": "2025-10-01T10:00:00Z"
+    },
+    {
+      "id": "apt-2",
+      "patientId": "patient-2",
+      "practitionerId": "prac-3",
+      "clinicId": "clinic-2",
+      "appointmentDate": "2025-10-02",
+      "appointmentTime": "2:30 pm",
+      "duration": 30,
+      "appointmentType": "follow-up",
+      "reason": "Follow-up for previous consultation",
+      "urgency": "routine",
+      "status": "confirmed",
+      "notes": "Check test results",
+      "medications": "Birth control pill",
+      "allergies": "None known",
+      "symptoms": "None",
+      "bookingFor": "myself",
+      "relationship": "",
+      "confirmationCode": "APT002",
+      "createdAt": "2025-10-01T11:30:00Z",
+      "updatedAt": "2025-10-01T11:30:00Z"
+    },
+    {
+      "patientId": "patient-1",
+      "practitionerId": "1",
+      "clinicId": "clinic-1",
+      "appointmentDate": "2025-10-01",
+      "appointmentTime": "9:30 am",
+      "duration": 30,
+      "appointmentType": "general-consultation",
+      "reason": "reason",
+      "urgency": "routine",
+      "status": "confirmed",
+      "notes": "",
+      "medications": "",
+      "allergies": "",
+      "symptoms": "",
+      "bookingFor": "myself",
+      "relationship": "",
+      "id": "apt-1759307528370-am4poox284",
+      "confirmationCode": "APTMJQYMS",
+      "createdAt": "2025-10-01T08:32:08.370Z",
+      "updatedAt": "2025-10-01T08:32:08.370Z"
+    },
+    {
+      "patientId": "patient-1",
+      "practitionerId": "1",
+      "clinicId": "clinic-1",
+      "appointmentDate": "2025-10-01",
+      "appointmentTime": "9:00 am",
+      "duration": 30,
+      "appointmentType": "general-consultation",
+      "reason": "reason",
+      "urgency": "routine",
+      "status": "confirmed",
+      "notes": "",
+      "medications": "",
+      "allergies": "",
+      "symptoms": "",
+      "bookingFor": "myself",
+      "relationship": "",
+      "id": "apt-1759308338216-seyjqz03gj",
+      "confirmationCode": "APTRYZBL3",
+      "createdAt": "2025-10-01T08:45:38.216Z",
+      "updatedAt": "2025-10-01T08:45:38.216Z"
+    },
+    {
+      "patientId": "patient-1",
+      "practitionerId": "1",
+      "clinicId": "clinic-1",
+      "appointmentDate": "2025-10-01",
+      "appointmentTime": "10:30 am",
+      "duration": 30,
+      "appointmentType": "general-consultation",
+      "reason": "visit for issues",
+      "urgency": "routine",
+      "status": "confirmed",
+      "notes": "",
+      "medications": "",
+      "allergies": "",
+      "symptoms": "",
+      "bookingFor": "myself",
+      "relationship": "",
+      "id": "apt-1759309181165-zhu72cm0zgm",
+      "confirmationCode": "APT3EVT1L",
+      "createdAt": "2025-10-01T08:59:41.165Z",
+      "updatedAt": "2025-10-01T08:59:41.165Z"
+    },
+    {
+      "patientId": "patient-1",
+      "practitionerId": "1",
+      "clinicId": "clinic-1",
+      "appointmentDate": "2025-10-01",
+      "appointmentTime": "11:20 am",
+      "duration": 30,
+      "appointmentType": "general-consultation",
+      "reason": "updated reasonos",
+      "urgency": "routine",
+      "status": "confirmed",
+      "notes": "",
+      "medications": "",
+      "allergies": "",
+      "symptoms": "",
+      "bookingFor": "myself",
+      "relationship": "",
+      "id": "apt-1759309663166-e5qtx2ljvx",
+      "confirmationCode": "APT2H3BAT",
+      "createdAt": "2025-10-01T09:07:43.166Z",
+      "updatedAt": "2025-10-01T09:07:43.166Z"
+    }
+  ],
   "clinics": [
     {
       "id": "clinic-1",
@@ -21,7 +222,12 @@
         "saturday": "09:00-13:00",
         "sunday": "closed"
       },
-      "services": ["General Practice", "Pathology", "Travel Medicine", "Women's Health"]
+      "services": [
+        "General Practice",
+        "Pathology",
+        "Travel Medicine",
+        "Women's Health"
+      ]
     },
     {
       "id": "clinic-2",
@@ -44,7 +250,12 @@
         "saturday": "08:00-12:00",
         "sunday": "closed"
       },
-      "services": ["General Practice", "Skin Checks", "Minor Surgery", "Pediatrics"]
+      "services": [
+        "General Practice",
+        "Skin Checks",
+        "Minor Surgery",
+        "Pediatrics"
+      ]
     },
     {
       "id": "clinic-3",
@@ -53,8 +264,8 @@
         "street": "78 Church Street",
         "suburb": "Parramatta",
         "postcode": "2150",
-        "lat": -33.8150,
-        "lng": 151.0010
+        "lat": -33.815,
+        "lng": 151.001
       },
       "phone": "02 9635 9012",
       "email": "hello@parramattahealthhub.com.au",
@@ -67,19 +278,51 @@
         "saturday": "09:00-17:00",
         "sunday": "10:00-14:00"
       },
-      "services": ["General Practice", "Mental Health", "Chronic Disease Management", "Vaccinations"]
+      "services": [
+        "General Practice",
+        "Mental Health",
+        "Chronic Disease Management",
+        "Vaccinations"
+      ]
     }
   ],
   "specialties": [
-    { "id": "spec-1", "name": "General Practice" },
-    { "id": "spec-2", "name": "Women's Health" },
-    { "id": "spec-3", "name": "Travel Medicine" },
-    { "id": "spec-4", "name": "Pediatrics" },
-    { "id": "spec-5", "name": "Skin Checks" },
-    { "id": "spec-6", "name": "Minor Surgery" },
-    { "id": "spec-7", "name": "Mental Health" },
-    { "id": "spec-8", "name": "Chronic Disease Management" },
-    { "id": "spec-9", "name": "Diabetes Care" }
+    {
+      "id": "spec-1",
+      "name": "General Practice"
+    },
+    {
+      "id": "spec-2",
+      "name": "Women's Health"
+    },
+    {
+      "id": "spec-3",
+      "name": "Travel Medicine"
+    },
+    {
+      "id": "spec-4",
+      "name": "Pediatrics"
+    },
+    {
+      "id": "spec-5",
+      "name": "Skin Checks"
+    },
+    {
+      "id": "spec-6",
+      "name": "Minor Surgery"
+    },
+    {
+      "id": "spec-7",
+      "name": "Mental Health"
+    },
+    {
+      "id": "spec-8",
+      "name": "Chronic Disease Management"
+    },
+    {
+      "id": "spec-9",
+      "name": "Diabetes Care"
+    }
   ],
   "practitioners": [
     {
@@ -87,29 +330,63 @@
       "clinicId": "clinic-1",
       "name": "Dr. Sarah Chen",
       "title": "MBBS, FRACGP",
-      "specialties": ["General Practice", "Women's Health", "Travel Medicine"],
+      "specialties": [
+        "General Practice",
+        "Women's Health",
+        "Travel Medicine"
+      ],
       "bio": "Dr. Chen has over 15 years of experience in family medicine with a special interest in women's health and preventive care.",
       "rating": 4.8,
-      "consultationTypes": ["in-person", "telehealth"],
+      "consultationTypes": [
+        "in-person",
+        "telehealth"
+      ],
       "availability": {
         "monday": [
-          {"start": "09:00", "end": "11:00"},
-          {"start": "14:00", "end": "16:00"},
-          {"start": "17:00", "end": "19:00"}
+          {
+            "start": "09:00",
+            "end": "11:00"
+          },
+          {
+            "start": "14:00",
+            "end": "16:00"
+          },
+          {
+            "start": "17:00",
+            "end": "19:00"
+          }
         ],
         "tuesday": [
-          {"start": "09:00", "end": "11:00"},
-          {"start": "14:00", "end": "16:00"}
+          {
+            "start": "09:00",
+            "end": "11:00"
+          },
+          {
+            "start": "14:00",
+            "end": "16:00"
+          }
         ],
         "wednesday": [
-          {"start": "09:00", "end": "12:00"}
+          {
+            "start": "09:00",
+            "end": "12:00"
+          }
         ],
         "thursday": [
-          {"start": "14:00", "end": "19:00"}
+          {
+            "start": "14:00",
+            "end": "19:00"
+          }
         ],
         "friday": [
-          {"start": "09:00", "end": "12:00"},
-          {"start": "14:00", "end": "16:00"}
+          {
+            "start": "09:00",
+            "end": "12:00"
+          },
+          {
+            "start": "14:00",
+            "end": "16:00"
+          }
         ]
       }
     },
@@ -118,29 +395,62 @@
       "clinicId": "clinic-1",
       "name": "Dr. James Mitchell",
       "title": "MBBS, FRACGP, Dip Child Health",
-      "specialties": ["General Practice", "Pediatrics", "Chronic Disease Management"],
+      "specialties": [
+        "General Practice",
+        "Pediatrics",
+        "Chronic Disease Management"
+      ],
       "bio": "Dr. Mitchell is passionate about family health and has extensive experience in pediatric care and chronic disease management.",
       "rating": 4.9,
-      "consultationTypes": ["in-person"],
+      "consultationTypes": [
+        "in-person"
+      ],
       "availability": {
         "monday": [
-          {"start": "08:00", "end": "11:00"},
-          {"start": "14:00", "end": "16:00"}
+          {
+            "start": "08:00",
+            "end": "11:00"
+          },
+          {
+            "start": "14:00",
+            "end": "16:00"
+          }
         ],
         "tuesday": [
-          {"start": "08:00", "end": "11:00"},
-          {"start": "14:00", "end": "16:00"}
+          {
+            "start": "08:00",
+            "end": "11:00"
+          },
+          {
+            "start": "14:00",
+            "end": "16:00"
+          }
         ],
         "wednesday": [
-          {"start": "08:00", "end": "12:00"},
-          {"start": "14:00", "end": "16:00"}
+          {
+            "start": "08:00",
+            "end": "12:00"
+          },
+          {
+            "start": "14:00",
+            "end": "16:00"
+          }
         ],
         "thursday": [
-          {"start": "08:00", "end": "11:00"}
+          {
+            "start": "08:00",
+            "end": "11:00"
+          }
         ],
         "friday": [
-          {"start": "08:00", "end": "12:00"},
-          {"start": "14:00", "end": "16:00"}
+          {
+            "start": "08:00",
+            "end": "12:00"
+          },
+          {
+            "start": "14:00",
+            "end": "16:00"
+          }
         ]
       }
     },
@@ -149,29 +459,62 @@
       "clinicId": "clinic-2",
       "name": "Dr. Emily Watson",
       "title": "MBBS, FRACGP",
-      "specialties": ["General Practice", "Skin Checks", "Minor Surgery"],
+      "specialties": [
+        "General Practice",
+        "Skin Checks",
+        "Minor Surgery"
+      ],
       "bio": "Dr. Watson specializes in skin cancer prevention and treatment, serving the coastal community with dedication.",
       "rating": 4.7,
-      "consultationTypes": ["in-person"],
+      "consultationTypes": [
+        "in-person"
+      ],
       "availability": {
         "monday": [
-          {"start": "08:00", "end": "12:00"},
-          {"start": "15:00", "end": "18:00"}
+          {
+            "start": "08:00",
+            "end": "12:00"
+          },
+          {
+            "start": "15:00",
+            "end": "18:00"
+          }
         ],
         "tuesday": [
-          {"start": "08:00", "end": "12:00"},
-          {"start": "15:00", "end": "18:00"}
+          {
+            "start": "08:00",
+            "end": "12:00"
+          },
+          {
+            "start": "15:00",
+            "end": "18:00"
+          }
         ],
         "wednesday": [
-          {"start": "08:00", "end": "12:00"}
+          {
+            "start": "08:00",
+            "end": "12:00"
+          }
         ],
         "thursday": [
-          {"start": "08:00", "end": "12:00"},
-          {"start": "15:00", "end": "17:00"}
+          {
+            "start": "08:00",
+            "end": "12:00"
+          },
+          {
+            "start": "15:00",
+            "end": "17:00"
+          }
         ],
         "friday": [
-          {"start": "08:00", "end": "12:00"},
-          {"start": "14:00", "end": "16:00"}
+          {
+            "start": "08:00",
+            "end": "12:00"
+          },
+          {
+            "start": "14:00",
+            "end": "16:00"
+          }
         ]
       }
     },
@@ -180,29 +523,62 @@
       "clinicId": "clinic-2",
       "name": "Dr. Michael Nguyen",
       "title": "MBBS, FRACGP, Dip Paediatrics",
-      "specialties": ["General Practice", "Pediatrics"],
+      "specialties": [
+        "General Practice",
+        "Pediatrics"
+      ],
       "bio": "Dr. Nguyen is a family physician who loves working with children and their families.",
       "rating": 4.9,
-      "consultationTypes": ["in-person", "telehealth"],
+      "consultationTypes": [
+        "in-person",
+        "telehealth"
+      ],
       "availability": {
         "tuesday": [
-          {"start": "08:00", "end": "12:00"},
-          {"start": "15:00", "end": "17:00"}
+          {
+            "start": "08:00",
+            "end": "12:00"
+          },
+          {
+            "start": "15:00",
+            "end": "17:00"
+          }
         ],
         "wednesday": [
-          {"start": "08:00", "end": "12:00"},
-          {"start": "15:00", "end": "18:00"}
+          {
+            "start": "08:00",
+            "end": "12:00"
+          },
+          {
+            "start": "15:00",
+            "end": "18:00"
+          }
         ],
         "thursday": [
-          {"start": "08:00", "end": "12:00"},
-          {"start": "15:00", "end": "18:00"}
+          {
+            "start": "08:00",
+            "end": "12:00"
+          },
+          {
+            "start": "15:00",
+            "end": "18:00"
+          }
         ],
         "friday": [
-          {"start": "08:00", "end": "12:00"},
-          {"start": "14:00", "end": "16:00"}
+          {
+            "start": "08:00",
+            "end": "12:00"
+          },
+          {
+            "start": "14:00",
+            "end": "16:00"
+          }
         ],
         "saturday": [
-          {"start": "08:00", "end": "12:00"}
+          {
+            "start": "08:00",
+            "end": "12:00"
+          }
         ]
       }
     },
@@ -211,30 +587,66 @@
       "clinicId": "clinic-3",
       "name": "Dr. Priya Sharma",
       "title": "MBBS, FRANZCP",
-      "specialties": ["Mental Health", "General Practice"],
+      "specialties": [
+        "Mental Health",
+        "General Practice"
+      ],
       "bio": "Dr. Sharma is a psychiatrist with a holistic approach to mental health and wellbeing.",
-      "rating": 5.0,
-      "consultationTypes": ["in-person", "telehealth"],
+      "rating": 5,
+      "consultationTypes": [
+        "in-person",
+        "telehealth"
+      ],
       "availability": {
         "monday": [
-          {"start": "09:00", "end": "12:00"},
-          {"start": "14:00", "end": "18:00"}
+          {
+            "start": "09:00",
+            "end": "12:00"
+          },
+          {
+            "start": "14:00",
+            "end": "18:00"
+          }
         ],
         "tuesday": [
-          {"start": "09:00", "end": "12:00"},
-          {"start": "14:00", "end": "17:00"}
+          {
+            "start": "09:00",
+            "end": "12:00"
+          },
+          {
+            "start": "14:00",
+            "end": "17:00"
+          }
         ],
         "wednesday": [
-          {"start": "09:00", "end": "12:00"},
-          {"start": "14:00", "end": "18:00"}
+          {
+            "start": "09:00",
+            "end": "12:00"
+          },
+          {
+            "start": "14:00",
+            "end": "18:00"
+          }
         ],
         "thursday": [
-          {"start": "09:00", "end": "12:00"},
-          {"start": "14:00", "end": "18:00"}
+          {
+            "start": "09:00",
+            "end": "12:00"
+          },
+          {
+            "start": "14:00",
+            "end": "18:00"
+          }
         ],
         "friday": [
-          {"start": "09:00", "end": "12:00"},
-          {"start": "14:00", "end": "16:00"}
+          {
+            "start": "09:00",
+            "end": "12:00"
+          },
+          {
+            "start": "14:00",
+            "end": "16:00"
+          }
         ]
       }
     },
@@ -243,33 +655,72 @@
       "clinicId": "clinic-3",
       "name": "Dr. Robert Taylor",
       "title": "MBBS, FRACGP",
-      "specialties": ["General Practice", "Chronic Disease Management", "Diabetes Care"],
+      "specialties": [
+        "General Practice",
+        "Chronic Disease Management",
+        "Diabetes Care"
+      ],
       "bio": "Dr. Taylor has a special interest in diabetes and cardiovascular health management.",
       "rating": 4.6,
-      "consultationTypes": ["in-person"],
+      "consultationTypes": [
+        "in-person"
+      ],
       "availability": {
         "monday": [
-          {"start": "08:00", "end": "12:00"},
-          {"start": "15:00", "end": "18:00"}
+          {
+            "start": "08:00",
+            "end": "12:00"
+          },
+          {
+            "start": "15:00",
+            "end": "18:00"
+          }
         ],
         "tuesday": [
-          {"start": "08:00", "end": "12:00"},
-          {"start": "15:00", "end": "17:00"}
+          {
+            "start": "08:00",
+            "end": "12:00"
+          },
+          {
+            "start": "15:00",
+            "end": "17:00"
+          }
         ],
         "thursday": [
-          {"start": "08:00", "end": "12:00"},
-          {"start": "15:00", "end": "18:00"}
+          {
+            "start": "08:00",
+            "end": "12:00"
+          },
+          {
+            "start": "15:00",
+            "end": "18:00"
+          }
         ],
         "friday": [
-          {"start": "08:00", "end": "12:00"},
-          {"start": "15:00", "end": "18:00"}
+          {
+            "start": "08:00",
+            "end": "12:00"
+          },
+          {
+            "start": "15:00",
+            "end": "18:00"
+          }
         ],
         "saturday": [
-          {"start": "09:00", "end": "12:00"},
-          {"start": "14:00", "end": "16:00"}
+          {
+            "start": "09:00",
+            "end": "12:00"
+          },
+          {
+            "start": "14:00",
+            "end": "16:00"
+          }
         ],
         "sunday": [
-          {"start": "10:00", "end": "13:00"}
+          {
+            "start": "10:00",
+            "end": "13:00"
+          }
         ]
       }
     }

@@ -25,51 +25,74 @@ export const PatientTypeStep = ({ onNext, onPrevious }: PatientTypeStepProps) =>
   const [patientType, setPatientType] = useState(bookingData.patientType || 'existing');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [patientDetails, setPatientDetails] = useState(bookingData.patientDetails);
+  const [isSearching, setIsSearching] = useState(false);
+  const [patientDetails, setPatientDetails] = useState(bookingData.patientDetails || {
+    firstName: '',
+    lastName: '',
+    dateOfBirth: '',
+    phone: '',
+    email: '',
+    address: '',
+    emergencyContact: {
+      name: '',
+      phone: '',
+      relationship: ''
+    }
+  });
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
 
-  // Mock patient search function
+  // Real patient search function
   const searchPatients = async (query: string) => {
     if (query.length < 2) {
       setSearchResults([]);
+      setIsSearching(false);
       return;
     }
 
-    // Mock API call - in real app, this would be an actual API
-    const mockPatients = [
-      {
-        id: '1',
-        firstName: 'John',
-        lastName: 'Doe',
-        dateOfBirth: '1990-05-15',
-        phone: '(555) 123-4567',
-        email: 'john.doe@email.com',
-        lastVisit: '2024-01-15'
-      },
-      {
-        id: '2',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        dateOfBirth: '1985-08-22',
-        phone: '(555) 987-6543',
-        email: 'jane.smith@email.com',
-        lastVisit: '2024-02-10'
+    setIsSearching(true);
+    try {
+      // Fetch all patients from API
+      const response = await fetch('/api/patients');
+      if (!response.ok) {
+        console.error('Failed to fetch patients:', response.statusText);
+        setSearchResults([]);
+        return;
       }
-    ];
 
-    const filtered = mockPatients.filter(patient => 
-      `${patient.firstName} ${patient.lastName}`.toLowerCase().includes(query.toLowerCase()) ||
-      patient.phone.includes(query) ||
-      patient.email.toLowerCase().includes(query.toLowerCase())
-    );
+      const patients = await response.json();
+      
+      // Filter patients based on search query
+      const filtered = patients.filter((patient: any) => 
+        `${patient.firstName} ${patient.lastName}`.toLowerCase().includes(query.toLowerCase()) ||
+        patient.phone.includes(query) ||
+        patient.email.toLowerCase().includes(query.toLowerCase())
+      );
 
-    setSearchResults(filtered);
+      setSearchResults(filtered);
+    } catch (error) {
+      console.error('Error searching patients:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
   };
+
+  // Debounced search effect
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchQuery.trim()) {
+        searchPatients(searchQuery.trim());
+      }
+    }, 300); // 300ms delay
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
 
   // Handle patient type change
   const handlePatientTypeChange = (value: string) => {
-    setPatientType(value);
-    updateBookingData({ patientType: value as 'existing' | 'new' });
+    const patientTypeValue = value as 'existing' | 'new';
+    setPatientType(patientTypeValue);
+    updateBookingData({ patientType: patientTypeValue });
     setSelectedPatient(null);
     setSearchQuery('');
     setSearchResults([]);
@@ -124,7 +147,7 @@ export const PatientTypeStep = ({ onNext, onPrevious }: PatientTypeStepProps) =>
     }
 
     if (patientType === 'new') {
-      const required = ['firstName', 'lastName', 'dateOfBirth', 'phone', 'email'];
+      const required = ['firstName', 'lastName', 'dateOfBirth', 'phone', 'email'] as const;
       const missing = required.filter(field => !patientDetails[field]?.trim());
       
       if (missing.length > 0) {
@@ -135,13 +158,6 @@ export const PatientTypeStep = ({ onNext, onPrevious }: PatientTypeStepProps) =>
 
     onNext();
   };
-
-  // Search patients when query changes
-  useEffect(() => {
-    if (patientType === 'existing') {
-      searchPatients(searchQuery);
-    }
-  }, [searchQuery, patientType]);
 
   return (
     <div className="space-y-6">
@@ -235,12 +251,19 @@ export const PatientTypeStep = ({ onNext, onPrevious }: PatientTypeStepProps) =>
           </CardHeader>
           <CardContent className="px-0 pb-0">
             <div className="space-y-4">
-              <Input
-                placeholder="Search by name, phone, or email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full"
-              />
+              <div className="relative">
+                <Input
+                  placeholder="Search by name, phone, or email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full"
+                />
+                {isSearching && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                  </div>
+                )}
+              </div>
 
               {searchResults.length > 0 && (
                 <div className="space-y-2">
@@ -264,11 +287,19 @@ export const PatientTypeStep = ({ onNext, onPrevious }: PatientTypeStepProps) =>
                           <p className="text-sm text-muted-foreground">
                             Phone: {patient.phone}
                           </p>
+                          <p className="text-sm text-muted-foreground">
+                            Email: {patient.email}
+                          </p>
                         </div>
                         <div className="text-right">
                           <p className="text-xs text-muted-foreground">
-                            Last visit: {new Date(patient.lastVisit).toLocaleDateString()}
+                            Patient ID: {patient.id}
                           </p>
+                          {patient.createdAt && (
+                            <p className="text-xs text-muted-foreground">
+                              Registered: {new Date(patient.createdAt).toLocaleDateString()}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </Card>

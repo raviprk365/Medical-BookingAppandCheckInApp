@@ -145,12 +145,12 @@ export const AppointmentReasonStep = ({ onNext, onPrevious }: AppointmentReasonS
   // Validate and proceed
   const handleNext = () => {
     if (!selectedType) {
-      alert('Please select an appointment type');
+      alert('Please select an appointment type to continue');
       return;
     }
 
     if (!reason.trim()) {
-      alert('Please provide a reason for your visit');
+      alert('Please provide a reason for your visit to continue');
       return;
     }
 
@@ -166,7 +166,7 @@ export const AppointmentReasonStep = ({ onNext, onPrevious }: AppointmentReasonS
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Stethoscope className="w-5 h-5" />
-            Appointment Type
+            Appointment Type *
           </CardTitle>
         </CardHeader>
         <CardContent>

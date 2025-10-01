@@ -1,12 +1,8 @@
 import { create } from 'zustand';
 
-// Enhanced booking data structure for step-by-step flow
-interface BookingData {
-  // Step 1: Who booking for
+export interface BookingData {
   bookingFor: 'myself' | 'someone-else';
   relationship: string;
-  
-  // Step 2: Patient details
   patientType: 'existing' | 'new';
   patientId: string | null;
   patientDetails: {
@@ -23,18 +19,15 @@ interface BookingData {
     };
   };
   
-  // Step 3: Appointment reason and duration
   appointmentReason: string;
   appointmentType: string;
   duration: number; // in minutes
   urgency: 'routine' | 'urgent' | 'emergency';
-  
-  // Step 4: Doctor selection
   specialtyRequired: string;
   doctorPreference: 'any' | 'specific';
   practitionerId: string | null;
-  
-  // Step 5: Date and time
+
+  appointmentDate: string; // Date in YYYY-MM-DD format
   selectedDate: Date | null;
   selectedTime: string | null;
   alternativeTimes: string[];
@@ -123,6 +116,7 @@ const initialBookingData: BookingData = {
   specialtyRequired: '',
   doctorPreference: 'any',
   practitionerId: null,
+  appointmentDate: '',
   selectedDate: null,
   selectedTime: null,
   alternativeTimes: [],
