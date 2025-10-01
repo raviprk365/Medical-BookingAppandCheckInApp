@@ -1,5 +1,56 @@
 import { create } from 'zustand';
 
+// Enhanced booking data structure for step-by-step flow
+interface BookingData {
+  // Step 1: Who booking for
+  bookingFor: 'myself' | 'someone-else';
+  relationship: string;
+  
+  // Step 2: Patient details
+  patientType: 'existing' | 'new';
+  patientId: string | null;
+  patientDetails: {
+    firstName: string;
+    lastName: string;
+    dateOfBirth: string;
+    phone: string;
+    email: string;
+    address: string;
+    emergencyContact: {
+      name: string;
+      phone: string;
+      relationship: string;
+    };
+  };
+  
+  // Step 3: Appointment reason and duration
+  appointmentReason: string;
+  appointmentType: string;
+  duration: number; // in minutes
+  urgency: 'routine' | 'urgent' | 'emergency';
+  
+  // Step 4: Doctor selection
+  specialtyRequired: string;
+  doctorPreference: 'any' | 'specific';
+  practitionerId: string | null;
+  
+  // Step 5: Date and time
+  selectedDate: Date | null;
+  selectedTime: string | null;
+  alternativeTimes: string[];
+  
+  // Step 6: Additional details
+  symptoms: string;
+  medications: string;
+  allergies: string;
+  notes: string;
+  
+  // Confirmation
+  confirmed: boolean;
+  confirmationCode: string;
+  bookingId: string | null;
+}
+
 interface BookingState {
   currentStep: string;
   patientId: string | null;
@@ -14,6 +65,9 @@ interface BookingState {
   selectedClinic: any;
   selectedPractitioner: any;
   selectedService: any;
+  
+  // Enhanced booking data for new flow
+  bookingData: BookingData;
   
   // Setters
   setCurrentStep: (step: string) => void;
@@ -30,6 +84,9 @@ interface BookingState {
   setSelectedPractitioner: (practitioner: any) => void;
   setSelectedService: (service: any) => void;
   
+  // Enhanced booking data methods
+  updateBookingData: (data: Partial<BookingData>) => void;
+  
   // Convenience methods
   setClinic: (id: string) => void;
   setService: (id: string) => void;
@@ -41,8 +98,45 @@ interface BookingState {
   resetBooking: () => void;
 }
 
+const initialBookingData: BookingData = {
+  bookingFor: 'myself',
+  relationship: '',
+  patientType: 'existing',
+  patientId: null,
+  patientDetails: {
+    firstName: '',
+    lastName: '',
+    dateOfBirth: '',
+    phone: '',
+    email: '',
+    address: '',
+    emergencyContact: {
+      name: '',
+      phone: '',
+      relationship: ''
+    }
+  },
+  appointmentReason: '',
+  appointmentType: '',
+  duration: 30,
+  urgency: 'routine',
+  specialtyRequired: '',
+  doctorPreference: 'any',
+  practitionerId: null,
+  selectedDate: null,
+  selectedTime: null,
+  alternativeTimes: [],
+  symptoms: '',
+  medications: '',
+  allergies: '',
+  notes: '',
+  confirmed: false,
+  confirmationCode: '',
+  bookingId: null
+};
+
 const initialState = {
-  currentStep: 'patient',
+  currentStep: 'booking-for',
   patientId: null,
   clinicId: null,
   serviceId: null,
@@ -55,6 +149,7 @@ const initialState = {
   selectedClinic: null,
   selectedPractitioner: null,
   selectedService: null,
+  bookingData: initialBookingData,
 };
 
 export const useBookingStore = create<BookingState>((set) => ({
@@ -74,6 +169,11 @@ export const useBookingStore = create<BookingState>((set) => ({
   setSelectedClinic: (selectedClinic) => set({ selectedClinic, clinicId: selectedClinic?.id }),
   setSelectedPractitioner: (selectedPractitioner) => set({ selectedPractitioner, practitionerId: selectedPractitioner?.id }),
   setSelectedService: (selectedService) => set({ selectedService, serviceId: selectedService?.id }),
+  
+  // Enhanced booking data methods
+  updateBookingData: (data) => set((state) => ({
+    bookingData: { ...state.bookingData, ...data }
+  })),
   
   // Convenience methods
   setClinic: (id: string) => set({ clinicId: id }),
