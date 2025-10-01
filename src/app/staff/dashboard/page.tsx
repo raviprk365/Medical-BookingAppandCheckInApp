@@ -1,37 +1,59 @@
 'use client';
 
-import { signOut, useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
+import { useDashboardMetrics, useTodaysAppointments } from '@/hooks/useAppointments';
+import { Sidebar } from '@/components/Sidebar';
+import { MetricCard } from '@/components/MetricCard';
+import { AppointmentCard } from '@/components/AppointmentCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, Users, Stethoscope, Settings, BarChart3, UserPlus, FileText, Phone, Bell } from 'lucide-react';
+import { Calendar, Clock, Users, Stethoscope, UserPlus, FileText, Bell, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { format } from 'date-fns';
+
+// Sample data for charts
+const appointmentTrends = [
+  { name: 'Mon', appointments: 24 },
+  { name: 'Tue', appointments: 30 },
+  { name: 'Wed', appointments: 28 },
+  { name: 'Thu', appointments: 32 },
+  { name: 'Fri', appointments: 26 },
+  { name: 'Sat', appointments: 18 },
+  { name: 'Sun', appointments: 12 }
+];
+
+const statusDistribution = [
+  { name: 'Completed', value: 15, fill: '#10b981' },
+  { name: 'Confirmed', value: 8, fill: '#3b82f6' },
+  { name: 'Waiting', value: 3, fill: '#f59e0b' },
+  { name: 'Cancelled', value: 2, fill: '#ef4444' }
+];
 
 export default function StaffDashboard() {
   const { data: session, status } = useSession();
   const { user, isAuthenticated, isLoading, login } = useAuth();
+  const { metrics, loading: metricsLoading } = useDashboardMetrics();
+  const { 
+    appointments: todaysAppointments, 
+    loading: appointmentsLoading,
+    updateAppointmentStatus 
+  } = useTodaysAppointments();
   const router = useRouter();
 
   useEffect(() => {
-    console.log('📊 Dashboard: Session status:', status);
-    console.log('📊 Dashboard: Session data:', session);
-    console.log('📊 Dashboard: Zustand auth state:', { isAuthenticated, user, isLoading });
-
     if (status === 'loading' || isLoading) return;
     
     if (status === 'unauthenticated' || !session) {
-      console.log('📊 Dashboard: Not authenticated, redirecting to signin');
       router.push('/auth/signin');
       return;
     }
 
-    // If we have a session but no user in Zustand store, sync them
+    // Sync session to Zustand store if needed
     if (status === 'authenticated' && session?.user && !isAuthenticated) {
-      console.log('📊 Dashboard: Syncing session to Zustand store');
       const userData = {
         id: session.user.id || session.user.email || 'unknown',
         name: session.user.name || 'Unknown User',
@@ -42,8 +64,6 @@ export default function StaffDashboard() {
       };
       login(userData);
     }
-    
-    console.log('📊 Dashboard: Authentication verified');
   }, [session, status, isAuthenticated, user, isLoading, router, login]);
 
   if (status === 'loading' || isLoading) {
@@ -58,7 +78,7 @@ export default function StaffDashboard() {
     return null;
   }
 
-  // Use session data as fallback if Zustand store is not yet populated
+  // Use session data as fallback
   const currentUser = user || {
     id: session.user?.id || session.user?.email || 'unknown',
     name: session.user?.name || 'Unknown User',
@@ -68,337 +88,252 @@ export default function StaffDashboard() {
     image: session.user?.image,
   };
 
-  const todaysAppointments = [
-    {
-      id: 1,
-      patient: 'John Doe',
-      time: '9:00 AM',
-      type: 'General Consultation',
-      doctor: 'Dr. Sarah Chen',
-      status: 'confirmed',
-      duration: '30 min'
-    },
-    {
-      id: 2,
-      patient: 'Sarah Johnson',
-      time: '10:30 AM',
-      type: 'Follow-up',
-      doctor: 'Dr. Sarah Chen',
-      status: 'waiting',
-      duration: '15 min'
-    },
-    {
-      id: 3,
-      patient: 'Michael Chen',
-      time: '2:00 PM',
-      type: 'Health Check',
-      doctor: 'Dr. James Mitchell',
-      status: 'confirmed',
-      duration: '45 min'
-    }
-  ];
-
-  const stats = {
-    totalPatients: 156,
-    todaysAppointments: todaysAppointments.length,
-    pendingApprovals: 5,
-    completedToday: 8
-  };
-
-  const getRoleDisplayName = (role: string) => {
-    switch (role) {
-      case 'admin': return 'Administrator';
-      case 'doctor': return 'Doctor';
-      case 'nurse': return 'Nurse';
-      case 'staff': return 'Staff Member';
-      default: return 'Staff';
-    }
-  };
-
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'admin': return 'bg-red-100 text-red-800';
-      case 'doctor': return 'bg-blue-100 text-blue-800';
-      case 'nurse': return 'bg-green-100 text-green-800';
-      case 'staff': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const handleAppointmentAction = (appointmentId: string, action: string) => {
+    switch (action) {
+      case 'call':
+        // Implement call functionality
+        console.log('Calling patient for appointment:', appointmentId);
+        break;
+      case 'message':
+        // Implement messaging functionality
+        console.log('Messaging patient for appointment:', appointmentId);
+        break;
+      default:
+        console.log('Unknown action:', action);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <Header />
+    <div className="min-h-screen flex bg-gray-50">
+      {/* Sidebar */}
+      <Sidebar />
       
-      <main className="flex-1 container mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Welcome, {currentUser?.name}
+              <h1 className="text-2xl font-bold text-gray-900">
+                Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {currentUser?.name}
               </h1>
-              <div className="flex items-center gap-2">
-                <Badge className={getRoleColor(currentUser?.role || '')}>
-                  {getRoleDisplayName(currentUser?.role || '')}
-                </Badge>
-                {currentUser?.clinicId && (
-                  <Badge variant="outline">Sydney CBD Medical Centre</Badge>
-                )}
-              </div>
+              <p className="text-gray-600 mt-1">
+                Here's what's happening at your clinic today
+              </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-3">
               <Button variant="outline" size="sm">
                 <Bell className="h-4 w-4 mr-2" />
                 Notifications
+                <Badge className="ml-2 bg-red-500">3</Badge>
               </Button>
-              {currentUser?.role === 'admin' && (
-                <Button variant="outline" size="sm">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Admin Panel
-                </Button>
-              )}
+              <div className="text-sm text-gray-500">
+                {format(new Date(), 'EEEE, MMMM do, yyyy')}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Patients</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalPatients}</p>
-                </div>
-                <Users className="h-8 w-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Today's Appointments</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.todaysAppointments}</p>
-                </div>
-                <Calendar className="h-8 w-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Pending Approvals</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.pendingApprovals}</p>
-                </div>
-                <FileText className="h-8 w-8 text-orange-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Completed Today</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.completedToday}</p>
-                </div>
-                <Stethoscope className="h-8 w-8 text-purple-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-4 text-center">
-              <UserPlus className="h-6 w-6 text-blue-600 mx-auto mb-2" />
-              <h3 className="font-medium text-sm">Add Patient</h3>
-            </CardContent>
-          </Card>
-          
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-4 text-center">
-              <Calendar className="h-6 w-6 text-green-600 mx-auto mb-2" />
-              <h3 className="font-medium text-sm">Schedule Appointment</h3>
-            </CardContent>
-          </Card>
-          
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-4 text-center">
-              <FileText className="h-6 w-6 text-purple-600 mx-auto mb-2" />
-              <h3 className="font-medium text-sm">Medical Records</h3>
-            </CardContent>
-          </Card>
-          
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-4 text-center">
-              <BarChart3 className="h-6 w-6 text-orange-600 mx-auto mb-2" />
-              <h3 className="font-medium text-sm">Reports</h3>
-            </CardContent>
-          </Card>
-          
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-4 text-center">
-              <Settings className="h-6 w-6 text-gray-600 mx-auto mb-2" />
-              <h3 className="font-medium text-sm">Settings</h3>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Today's Schedule */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Today's Schedule
-                </CardTitle>
-                <CardDescription>Appointments for {new Date().toLocaleDateString('en-AU')}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {todaysAppointments.map((appointment) => (
-                  <div key={appointment.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-gray-900">{appointment.patient}</h4>
-                        <Badge variant={appointment.status === 'confirmed' ? 'default' : 
-                                      appointment.status === 'waiting' ? 'secondary' : 'outline'}>
-                          {appointment.status}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-1">{appointment.type} • {appointment.duration}</p>
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          {appointment.time}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Stethoscope className="h-4 w-4" />
-                          {appointment.doctor}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 ml-4">
-                      {appointment.status === 'waiting' && (
-                        <Button size="sm">Check In</Button>
-                      )}
-                      <Button variant="outline" size="sm">
-                        <Phone className="h-4 w-4 mr-1" />
-                        Call
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-                
-                {todaysAppointments.length === 0 && (
-                  <div className="text-center py-8">
-                    <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No appointments today</h3>
-                    <p className="text-gray-600">Your schedule is clear for today</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+        {/* Dashboard Content */}
+        <div className="p-6 space-y-6">
+          {/* Metrics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <MetricCard
+              title="Today's Appointments"
+              value={metricsLoading ? '...' : metrics.todaysAppointments}
+              icon={Calendar}
+              iconColor="text-blue-600"
+              change={{ value: '+12%', trend: 'up' }}
+            />
+            <MetricCard
+              title="Patients Waiting"
+              value={metricsLoading ? '...' : metrics.waitingPatients}
+              icon={Clock}
+              iconColor="text-yellow-600"
+              change={{ value: '2 min avg', trend: 'neutral' }}
+            />
+            <MetricCard
+              title="Completed Today"
+              value={metricsLoading ? '...' : metrics.completedToday}
+              icon={CheckCircle}
+              iconColor="text-green-600"
+              change={{ value: '+8%', trend: 'up' }}
+            />
+            <MetricCard
+              title="Total Patients"
+              value={metricsLoading ? '...' : metrics.totalPatients}
+              icon={Users}
+              iconColor="text-purple-600"
+              change={{ value: '+5 new', trend: 'up' }}
+            />
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Pending Tasks */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Pending Tasks
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium">New patient registrations</p>
-                    <p className="text-xs text-gray-600">3 pending approval</p>
-                  </div>
-                  <Badge variant="secondary">3</Badge>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium">Lab results review</p>
-                    <p className="text-xs text-gray-600">2 results to review</p>
-                  </div>
-                  <Badge variant="secondary">2</Badge>
-                </div>
-                
-                <Button variant="outline" size="sm" className="w-full">
-                  View All Tasks
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>Frequently used shortcuts</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Button variant="outline" className="h-20 flex-col gap-2">
+                  <UserPlus className="h-6 w-6" />
+                  <span className="text-sm">Add Patient</span>
                 </Button>
-              </CardContent>
-            </Card>
+                <Button variant="outline" className="h-20 flex-col gap-2">
+                  <Calendar className="h-6 w-6" />
+                  <span className="text-sm">New Appointment</span>
+                </Button>
+                <Button variant="outline" className="h-20 flex-col gap-2">
+                  <FileText className="h-6 w-6" />
+                  <span className="text-sm">Medical Records</span>
+                </Button>
+                <Button variant="outline" className="h-20 flex-col gap-2">
+                  <TrendingUp className="h-6 w-6" />
+                  <span className="text-sm">Reports</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
-            {/* Recent Activity */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-2 h-2 bg-green-600 rounded-full mt-2"></div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900">Patient checked in for 2:00 PM appointment</p>
-                    <p className="text-xs text-gray-500">5 minutes ago</p>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Today's Appointments Overview */}
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Today's Appointments</CardTitle>
+                    <CardDescription>
+                      {format(new Date(), 'EEEE, MMMM do')} • {todaysAppointments.length} appointments
+                    </CardDescription>
                   </div>
-                </div>
-                
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900">New appointment scheduled for tomorrow</p>
-                    <p className="text-xs text-gray-500">1 hour ago</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-2 h-2 bg-purple-600 rounded-full mt-2"></div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900">Patient profile updated</p>
-                    <p className="text-xs text-gray-500">2 hours ago</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                  <Button variant="outline" size="sm">
+                    View All
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {appointmentsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    </div>
+                  ) : todaysAppointments.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No appointments today</h3>
+                      <p className="text-gray-600">Your schedule is clear for today</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {todaysAppointments.slice(0, 4).map((appointment) => (
+                        <AppointmentCard
+                          key={appointment.id}
+                          appointment={{
+                            id: appointment.id,
+                            patientName: appointment.patientName,
+                            time: appointment.appointmentTime,
+                            duration: appointment.duration,
+                            type: appointment.appointmentType,
+                            doctor: appointment.practitionerName,
+                            status: appointment.status,
+                            reason: appointment.reason,
+                            phone: appointment.patientPhone,
+                            notes: appointment.notes
+                          }}
+                          onStatusChange={updateAppointmentStatus}
+                          onContact={handleAppointmentAction}
+                        />
+                      ))}
+                      {todaysAppointments.length > 4 && (
+                        <div className="text-center pt-4">
+                          <Button variant="outline" size="sm">
+                            View {todaysAppointments.length - 4} more appointments
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
 
-            {/* System Status */}
-            {currentUser?.role === 'admin' && (
+            {/* Sidebar Content */}
+            <div className="space-y-6">
+              {/* Notifications */}
               <Card>
                 <CardHeader>
-                  <CardTitle>System Status</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <Bell className="h-5 w-5" />
+                    Notifications
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Database</span>
-                    <Badge className="bg-green-100 text-green-800">Online</Badge>
+                  <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
+                    <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-orange-900">Patient running late</p>
+                      <p className="text-xs text-orange-700">John Doe - 10:30 AM appointment</p>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Backup</span>
-                    <Badge className="bg-green-100 text-green-800">Current</Badge>
+                  
+                  <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+                    <FileText className="h-5 w-5 text-blue-600 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-blue-900">Lab results received</p>
+                      <p className="text-xs text-blue-700">3 new results to review</p>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Security</span>
-                    <Badge className="bg-green-100 text-green-800">Secure</Badge>
+
+                  <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
+                    <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-green-900">Patient checked in</p>
+                      <p className="text-xs text-green-700">Sarah Johnson - 2:00 PM</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
-            )}
+
+              {/* Charts */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Appointment Trends</CardTitle>
+                  <CardDescription>This week's appointments</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <LineChart data={appointmentTrends}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="appointments" stroke="#3b82f6" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Status Distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Today's Status</CardTitle>
+                  <CardDescription>Appointment status breakdown</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={statusDistribution}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="value" fill="#8884d8" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
-      </main>
-      
-      <Footer />
+      </div>
     </div>
   );
 }
