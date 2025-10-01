@@ -1,0 +1,277 @@
+{
+  "clinics": [
+    {
+      "id": "clinic-1",
+      "name": "Sydney CBD Medical Centre",
+      "address": {
+        "street": "123 George Street",
+        "suburb": "Sydney",
+        "postcode": "2000",
+        "lat": -33.8688,
+        "lng": 151.2093
+      },
+      "phone": "02 9555 1234",
+      "email": "info@sydneycbdmedical.com.au",
+      "openHours": {
+        "monday": "08:00-18:00",
+        "tuesday": "08:00-18:00",
+        "wednesday": "08:00-18:00",
+        "thursday": "08:00-20:00",
+        "friday": "08:00-18:00",
+        "saturday": "09:00-13:00",
+        "sunday": "closed"
+      },
+      "services": ["General Practice", "Pathology", "Travel Medicine", "Women's Health"]
+    },
+    {
+      "id": "clinic-2",
+      "name": "Bondi Beach Family Practice",
+      "address": {
+        "street": "45 Campbell Parade",
+        "suburb": "Bondi Beach",
+        "postcode": "2026",
+        "lat": -33.8915,
+        "lng": 151.2767
+      },
+      "phone": "02 9130 5678",
+      "email": "reception@bondifamilypractice.com.au",
+      "openHours": {
+        "monday": "07:30-19:00",
+        "tuesday": "07:30-19:00",
+        "wednesday": "07:30-19:00",
+        "thursday": "07:30-19:00",
+        "friday": "07:30-17:00",
+        "saturday": "08:00-12:00",
+        "sunday": "closed"
+      },
+      "services": ["General Practice", "Skin Checks", "Minor Surgery", "Pediatrics"]
+    },
+    {
+      "id": "clinic-3",
+      "name": "Parramatta Health Hub",
+      "address": {
+        "street": "78 Church Street",
+        "suburb": "Parramatta",
+        "postcode": "2150",
+        "lat": -33.8150,
+        "lng": 151.0010
+      },
+      "phone": "02 9635 9012",
+      "email": "hello@parramattahealthhub.com.au",
+      "openHours": {
+        "monday": "08:00-20:00",
+        "tuesday": "08:00-20:00",
+        "wednesday": "08:00-20:00",
+        "thursday": "08:00-20:00",
+        "friday": "08:00-20:00",
+        "saturday": "09:00-17:00",
+        "sunday": "10:00-14:00"
+      },
+      "services": ["General Practice", "Mental Health", "Chronic Disease Management", "Vaccinations"]
+    }
+  ],
+  "specialties": [
+    { "id": "spec-1", "name": "General Practice" },
+    { "id": "spec-2", "name": "Women's Health" },
+    { "id": "spec-3", "name": "Travel Medicine" },
+    { "id": "spec-4", "name": "Pediatrics" },
+    { "id": "spec-5", "name": "Skin Checks" },
+    { "id": "spec-6", "name": "Minor Surgery" },
+    { "id": "spec-7", "name": "Mental Health" },
+    { "id": "spec-8", "name": "Chronic Disease Management" },
+    { "id": "spec-9", "name": "Diabetes Care" }
+  ],
+  "practitioners": [
+    {
+      "id": "prac-1",
+      "clinicId": "clinic-1",
+      "name": "Dr. Sarah Chen",
+      "title": "MBBS, FRACGP",
+      "specialties": ["General Practice", "Women's Health", "Travel Medicine"],
+      "bio": "Dr. Chen has over 15 years of experience in family medicine with a special interest in women's health and preventive care.",
+      "rating": 4.8,
+      "consultationTypes": ["in-person", "telehealth"],
+      "availability": {
+        "monday": [
+          {"start": "09:00", "end": "11:00"},
+          {"start": "14:00", "end": "16:00"},
+          {"start": "17:00", "end": "19:00"}
+        ],
+        "tuesday": [
+          {"start": "09:00", "end": "11:00"},
+          {"start": "14:00", "end": "16:00"}
+        ],
+        "wednesday": [
+          {"start": "09:00", "end": "12:00"}
+        ],
+        "thursday": [
+          {"start": "14:00", "end": "19:00"}
+        ],
+        "friday": [
+          {"start": "09:00", "end": "12:00"},
+          {"start": "14:00", "end": "16:00"}
+        ]
+      }
+    },
+    {
+      "id": "prac-2",
+      "clinicId": "clinic-1",
+      "name": "Dr. James Mitchell",
+      "title": "MBBS, FRACGP, Dip Child Health",
+      "specialties": ["General Practice", "Pediatrics", "Chronic Disease Management"],
+      "bio": "Dr. Mitchell is passionate about family health and has extensive experience in pediatric care and chronic disease management.",
+      "rating": 4.9,
+      "consultationTypes": ["in-person"],
+      "availability": {
+        "monday": [
+          {"start": "08:00", "end": "11:00"},
+          {"start": "14:00", "end": "16:00"}
+        ],
+        "tuesday": [
+          {"start": "08:00", "end": "11:00"},
+          {"start": "14:00", "end": "16:00"}
+        ],
+        "wednesday": [
+          {"start": "08:00", "end": "12:00"},
+          {"start": "14:00", "end": "16:00"}
+        ],
+        "thursday": [
+          {"start": "08:00", "end": "11:00"}
+        ],
+        "friday": [
+          {"start": "08:00", "end": "12:00"},
+          {"start": "14:00", "end": "16:00"}
+        ]
+      }
+    },
+    {
+      "id": "prac-3",
+      "clinicId": "clinic-2",
+      "name": "Dr. Emily Watson",
+      "title": "MBBS, FRACGP",
+      "specialties": ["General Practice", "Skin Checks", "Minor Surgery"],
+      "bio": "Dr. Watson specializes in skin cancer prevention and treatment, serving the coastal community with dedication.",
+      "rating": 4.7,
+      "consultationTypes": ["in-person"],
+      "availability": {
+        "monday": [
+          {"start": "08:00", "end": "12:00"},
+          {"start": "15:00", "end": "18:00"}
+        ],
+        "tuesday": [
+          {"start": "08:00", "end": "12:00"},
+          {"start": "15:00", "end": "18:00"}
+        ],
+        "wednesday": [
+          {"start": "08:00", "end": "12:00"}
+        ],
+        "thursday": [
+          {"start": "08:00", "end": "12:00"},
+          {"start": "15:00", "end": "17:00"}
+        ],
+        "friday": [
+          {"start": "08:00", "end": "12:00"},
+          {"start": "14:00", "end": "16:00"}
+        ]
+      }
+    },
+    {
+      "id": "prac-4",
+      "clinicId": "clinic-2",
+      "name": "Dr. Michael Nguyen",
+      "title": "MBBS, FRACGP, Dip Paediatrics",
+      "specialties": ["General Practice", "Pediatrics"],
+      "bio": "Dr. Nguyen is a family physician who loves working with children and their families.",
+      "rating": 4.9,
+      "consultationTypes": ["in-person", "telehealth"],
+      "availability": {
+        "tuesday": [
+          {"start": "08:00", "end": "12:00"},
+          {"start": "15:00", "end": "17:00"}
+        ],
+        "wednesday": [
+          {"start": "08:00", "end": "12:00"},
+          {"start": "15:00", "end": "18:00"}
+        ],
+        "thursday": [
+          {"start": "08:00", "end": "12:00"},
+          {"start": "15:00", "end": "18:00"}
+        ],
+        "friday": [
+          {"start": "08:00", "end": "12:00"},
+          {"start": "14:00", "end": "16:00"}
+        ],
+        "saturday": [
+          {"start": "08:00", "end": "12:00"}
+        ]
+      }
+    },
+    {
+      "id": "prac-5",
+      "clinicId": "clinic-3",
+      "name": "Dr. Priya Sharma",
+      "title": "MBBS, FRANZCP",
+      "specialties": ["Mental Health", "General Practice"],
+      "bio": "Dr. Sharma is a psychiatrist with a holistic approach to mental health and wellbeing.",
+      "rating": 5.0,
+      "consultationTypes": ["in-person", "telehealth"],
+      "availability": {
+        "monday": [
+          {"start": "09:00", "end": "12:00"},
+          {"start": "14:00", "end": "18:00"}
+        ],
+        "tuesday": [
+          {"start": "09:00", "end": "12:00"},
+          {"start": "14:00", "end": "17:00"}
+        ],
+        "wednesday": [
+          {"start": "09:00", "end": "12:00"},
+          {"start": "14:00", "end": "18:00"}
+        ],
+        "thursday": [
+          {"start": "09:00", "end": "12:00"},
+          {"start": "14:00", "end": "18:00"}
+        ],
+        "friday": [
+          {"start": "09:00", "end": "12:00"},
+          {"start": "14:00", "end": "16:00"}
+        ]
+      }
+    },
+    {
+      "id": "prac-6",
+      "clinicId": "clinic-3",
+      "name": "Dr. Robert Taylor",
+      "title": "MBBS, FRACGP",
+      "specialties": ["General Practice", "Chronic Disease Management", "Diabetes Care"],
+      "bio": "Dr. Taylor has a special interest in diabetes and cardiovascular health management.",
+      "rating": 4.6,
+      "consultationTypes": ["in-person"],
+      "availability": {
+        "monday": [
+          {"start": "08:00", "end": "12:00"},
+          {"start": "15:00", "end": "18:00"}
+        ],
+        "tuesday": [
+          {"start": "08:00", "end": "12:00"},
+          {"start": "15:00", "end": "17:00"}
+        ],
+        "thursday": [
+          {"start": "08:00", "end": "12:00"},
+          {"start": "15:00", "end": "18:00"}
+        ],
+        "friday": [
+          {"start": "08:00", "end": "12:00"},
+          {"start": "15:00", "end": "18:00"}
+        ],
+        "saturday": [
+          {"start": "09:00", "end": "12:00"},
+          {"start": "14:00", "end": "16:00"}
+        ],
+        "sunday": [
+          {"start": "10:00", "end": "13:00"}
+        ]
+      }
+    }
+  ]
+}
