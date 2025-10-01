@@ -1,12 +1,17 @@
 'use client';
 
 import Link from "next/link";
+import { useSession, signOut } from 'next-auth/react';
 import { Button } from "@/components/ui/button";
-import { Calendar, UserCircle, Stethoscope, Menu } from "lucide-react";
-import { useAuthStore } from "@/store/authStore";
+import { Calendar, UserCircle, Stethoscope, Menu, LogOut } from "lucide-react";
 
 export const Header = () => {
-  const { user, isAuthenticated } = useAuthStore();
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === 'authenticated';
+  
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: '/' });
+  };
   
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -23,33 +28,42 @@ export const Header = () => {
           <Link href="/about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             About
           </Link>
-          {isAuthenticated && user?.role === 'staff' && (
-            <Link href="/staff" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Staff Dashboard
+          {isAuthenticated && (session?.user?.role === 'staff' || session?.user?.role === 'admin') && (
+            <Link href="/dashboard" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Dashboard
             </Link>
           )}
         </nav>
         
         <div className="flex items-center space-x-3">
-          {isAuthenticated ? (
+          {isAuthenticated && session?.user ? (
             <>
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/patient/dashboard">
+                <Link href="/dashboard">
                   <UserCircle className="mr-2 h-4 w-4" />
-                  {user?.name}
+                  {session.user.name}
                 </Link>
               </Button>
-              <Button variant="default" size="sm" asChild>
-                <Link href="/booking">
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Book Now
-                </Link>
+              {session.user.role === 'patient' && (
+                <Button variant="default" size="sm" asChild>
+                  <Link href="/booking">
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Book Now
+                  </Link>
+                </Button>
+              )}
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
               </Button>
             </>
           ) : (
             <>
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/login">Log In</Link>
+                <Link href="/auth/signin">Sign In</Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/auth/signup">Sign Up</Link>
               </Button>
               <Button variant="default" size="sm" asChild>
                 <Link href="/booking">Book Appointment</Link>
