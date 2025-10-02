@@ -462,11 +462,20 @@ export default function SearchPage() {
 
                         {/* Actions */}
                         <div className="flex gap-2">
-                          <Button className="flex-1" onClick={() => window.location.href = `/booking?practitioner=${practitioner.id}`}>
+                          <Button 
+                            className="w-full" 
+                            onClick={() => {
+                              const queryParams = new URLSearchParams({
+                                practitioner: practitioner.id,
+                                from: 'search',
+                                specialty: filters.specialty.join(',') || '',
+                                consultationType: filters.consultationType || '',
+                                ...(filters.availability && { availability: filters.availability })
+                              });
+                              window.location.href = `/booking?${queryParams.toString()}`;
+                            }}
+                          >
                             Book Appointment
-                          </Button>
-                          <Button variant="outline" onClick={() => window.location.href = `/practitioners/${practitioner.id}`}>
-                            View Profile
                           </Button>
                         </div>
                       </CardContent>

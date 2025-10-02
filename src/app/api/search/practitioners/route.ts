@@ -176,16 +176,89 @@ function filterByRating(practitioners: any[], minRating?: number) {
   );
 }
 
+function filterByAvailability(practitioners: any[], availability?: string) {
+  if (!availability || availability === 'anytime') {
+    return practitioners;
+  }
+  
+  const today = new Date();
+  const todayDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const todayName = dayNames[todayDay];
+  
+  return practitioners.filter(practitioner => {
+    const practitionerAvailability = practitioner.availability || practitioner.settings?.availability || {};
+    
+    if (availability === 'today') {
+      // Check if practitioner is available today
+      const todaySchedule = practitionerAvailability[todayName];
+      
+      if (!todaySchedule) return false;
+      
+      // Check if enabled and has sessions
+      if (Array.isArray(todaySchedule)) {
+        return todaySchedule.length > 0;
+      } else {
+        return todaySchedule.enabled !== false && 
+               (todaySchedule.sessions?.length > 0 || Object.keys(todaySchedule).some(key => key !== 'enabled' && key !== 'sessions'));
+      }
+    } else if (availability === 'thisWeek') {
+      // Check if practitioner has any availability this week
+      return dayNames.some(day => {
+        const daySchedule = practitionerAvailability[day];
+        if (!daySchedule) return false;
+        
+        if (Array.isArray(daySchedule)) {
+          return daySchedule.length > 0;
+        } else {
+          return daySchedule.enabled !== false && 
+                 (daySchedule.sessions?.length > 0 || Object.keys(daySchedule).some(key => key !== 'enabled' && key !== 'sessions'));
+        }
+      });
+    }
+    
+    return true;
+  });
+}
+
 function sortPractitioners(practitioners: EnhancedPractitioner[], sortBy: string = 'relevance') {
   switch (sortBy) {
     case 'rating':
       return practitioners.sort((a, b) => (b.rating || 0) - (a.rating || 0));
     case 'nextAvailable':
-      // TODO: Implement availability-based sorting
-      return practitioners.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      return practitioners.sort((a, b) => {
+        // Sort by availability (those available today first)
+        const aAvailable = isAvailableToday(a);
+        const bAvailable = isAvailableToday(b);
+        
+        if (aAvailable && !bAvailable) return -1;
+        if (!aAvailable && bAvailable) return 1;
+        
+        // Secondary sort by rating
+        return (b.rating || 0) - (a.rating || 0);
+      });
     case 'relevance':
     default:
       return practitioners.sort((a, b) => b.relevanceScore - a.relevanceScore);
+  }
+}
+
+function isAvailableToday(practitioner: any): boolean {
+  const today = new Date();
+  const todayDay = today.getDay();
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const todayName = dayNames[todayDay];
+  
+  const practitionerAvailability = practitioner.availability || practitioner.settings?.availability || {};
+  const todaySchedule = practitionerAvailability[todayName];
+  
+  if (!todaySchedule) return false;
+  
+  if (Array.isArray(todaySchedule)) {
+    return todaySchedule.length > 0;
+  } else {
+    return todaySchedule.enabled !== false && 
+           (todaySchedule.sessions?.length > 0 || Object.keys(todaySchedule).some(key => key !== 'enabled' && key !== 'sessions'));
   }
 }
 
@@ -199,7 +272,7 @@ export async function GET(request: NextRequest) {
       consultationType: searchParams.get('consultationType') as any,
       availability: searchParams.get('availability') as any,
       rating: searchParams.get('rating') ? Number(searchParams.get('rating')) : undefined,
-      sortBy: searchParams.get('sortBy') || 'relevance'
+      sortBy: (searchParams.get('sortBy') as 'rating' | 'nextAvailable' | 'relevance') || 'relevance'
     };
 
     console.log('🔍 Search API called with filters:', filters);
@@ -254,6 +327,9 @@ export async function GET(request: NextRequest) {
 
     // Apply rating filter
     filteredPractitioners = filterByRating(filteredPractitioners, filters.rating);
+
+    // Apply availability filter
+    filteredPractitioners = filterByAvailability(filteredPractitioners, filters.availability);
 
     // Sort results
     const sortedPractitioners = sortPractitioners(filteredPractitioners as EnhancedPractitioner[], filters.sortBy);
@@ -343,7 +419,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        suggestions: [...new Set([...conditionSuggestions, ...generalSuggestions])].slice(0, 8),
+        suggestions: Array.from(new Set([...conditionSuggestions, ...generalSuggestions])).slice(0, 8),
         conditions: conditionSuggestions
       }
     });

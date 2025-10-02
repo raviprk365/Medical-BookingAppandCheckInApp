@@ -41,9 +41,9 @@ export const Header = () => {
         </Link>
         
         <nav className="hidden md:flex items-center space-x-6">
-          {/* <Link href="/search" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <Link href="/search" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Find Practitioners
-          </Link> */}
+          </Link>
           <Link href="/about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             About
           </Link>
