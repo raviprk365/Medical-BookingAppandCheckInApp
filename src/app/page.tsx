@@ -85,54 +85,61 @@ const Index = () => {
             <h2 className="text-2xl font-bold text-center mb-8">Search for Doctors</h2>
             
             <Card className="p-6 shadow-lg">
-              <div className="grid md:grid-cols-3 gap-4">
+              <div className="grid md:grid-cols-1 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Specialty/Test, Condition</label>
+                  <label className="text-sm font-medium text-gray-700">
+                    What condition or specialty are you looking for?
+                  </label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input 
-                      placeholder="e.g. Cardiologist, COVID-19"
-                      className="pl-10"
+                      placeholder="e.g. diabetes care, women's health, children's doctor, mental health"
+                      className="pl-10 pr-4 py-3 text-lg"
                       value={specialty}
                       onChange={(e) => setSpecialty(e.target.value)}
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Location/Pin Code</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input 
-                      placeholder="e.g. Sydney, 2000"
-                      className="pl-10"
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Date</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input 
-                      type="date"
-                      className="pl-10"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          window.location.href = `/search?query=${encodeURIComponent(specialty)}`;
+                        }
+                      }}
                     />
                   </div>
                 </div>
               </div>
               
+              {/* Popular Conditions */}
+              <div className="mt-6">
+                <p className="text-sm font-medium text-gray-700 mb-3">Popular conditions:</p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    'Diabetes Care',
+                    'Women\'s Health', 
+                    'Children\'s Health',
+                    'Mental Health',
+                    'Skin Checks',
+                    'Travel Medicine',
+                    'General Checkup',
+                    'Chronic Disease'
+                  ].map((condition) => (
+                    <button
+                      key={condition}
+                      onClick={() => window.location.href = `/search?query=${encodeURIComponent(condition)}`}
+                      className="px-3 py-1 text-sm bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100 transition-colors"
+                    >
+                      {condition}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
               <div className="mt-6 text-center">
-                <Link href="/search">
-                  <Button className="bg-blue-600 hover:bg-blue-700 px-12 py-3">
-                    <Search className="w-4 h-4 mr-2" />
-                    Search
-                  </Button>
-                </Link>
+                <Button 
+                  className="bg-blue-600 hover:bg-blue-700 px-12 py-3"
+                  onClick={() => window.location.href = `/search?query=${encodeURIComponent(specialty)}`}
+                >
+                  <Search className="w-4 h-4 mr-2" />
+                  Find Your Doctor
+                </Button>
               </div>
             </Card>
           </div>
@@ -207,56 +214,63 @@ const Index = () => {
       {/* Featured Doctors */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Featured Doctors</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">Our Expert Practitioners</h2>
           
-          <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {featuredPractitioners.map((doctor: any) => (
               <Card key={doctor.id} className="p-6 text-center hover:shadow-lg transition-shadow">
                 <CardContent className="p-0">
-                  <div className="w-20 h-20 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-                    <Users className="w-10 h-10 text-gray-600" />
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <Users className="w-10 h-10 text-blue-600" />
                   </div>
-                  <h3 className="font-semibold text-lg mb-1">Dr {doctor.name}</h3>
-                  <p className="text-blue-600 text-sm mb-2">{doctor.specialty}</p>
+                  <h3 className="font-semibold text-lg mb-1">{doctor.name}</h3>
+                  <p className="text-blue-600 text-sm mb-2">{doctor.title}</p>
+                  
+                  {/* Specialties */}
+                  <div className="flex flex-wrap justify-center gap-1 mb-3">
+                    {doctor.specialties?.slice(0, 2).map((specialty: string, idx: number) => (
+                      <Badge key={idx} variant="secondary" className="text-xs">
+                        {specialty}
+                      </Badge>
+                    ))}
+                  </div>
+                  
                   <div className="flex items-center justify-center gap-1 mb-3">
                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="text-sm text-gray-600">{doctor.rating || '4.8'}</span>
+                    <span className="text-sm text-gray-600">{doctor.rating}</span>
                   </div>
-                  <Badge variant="secondary" className="text-xs">
-                    {doctor.experience || '10'} years exp
-                  </Badge>
+                  
+                  {/* Consultation Types */}
+                  <div className="flex justify-center gap-2 mb-4">
+                    {doctor.consultationTypes?.includes('in-person') && (
+                      <Badge variant="outline" className="text-xs">In-person</Badge>
+                    )}
+                    {doctor.consultationTypes?.includes('telehealth') && (
+                      <Badge variant="outline" className="text-xs">Telehealth</Badge>
+                    )}
+                  </div>
+                  
+                  <Button 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => window.location.href = `/booking?practitioner=${doctor.id}`}
+                  >
+                    Book Appointment
+                  </Button>
                 </CardContent>
               </Card>
             ))}
           </div>
-        </div>
-      </section>
-      
-      {/* CTA Section */}
-      <section className="py-16 bg-blue-600">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
-            Ready to Book Your Appointment?
-          </h2>
-          <p className="text-blue-100 text-lg mb-8 max-w-2xl mx-auto">
-            Join thousands of patients who trust our platform for their healthcare needs. 
-            Start your journey to better health today.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/search">
-              <Button size="lg" variant="secondary" className="px-8 py-3">
-                Find a Doctor
-              </Button>
-            </Link>
-            <Link href="/booking">
-              <Button size="lg" variant="outline" className="px-8 py-3 text-white border-white hover:bg-white hover:text-blue-600">
-                Book Now
-              </Button>
-            </Link>
+          
+          <div className="text-center mt-8">
+            <Button variant="outline" onClick={() => window.location.href = '/search'}>
+              View All Practitioners
+            </Button>
           </div>
         </div>
       </section>
       
+    
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="container mx-auto px-4">
