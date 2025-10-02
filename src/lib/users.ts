@@ -7,7 +7,7 @@ export interface User {
   email: string;
   name: string;
   password: string;
-  role: 'admin' | 'staff' | 'doctor' | 'nurse' | 'patient';
+  role: 'admin' | 'staff' | 'practitioner' | 'nurse' | 'patient';
   clinicId: string | null;
   provider?: 'credentials' | 'google';
   image?: string;
@@ -19,7 +19,7 @@ export interface CreateUserData {
   email: string;
   name: string;
   password: string;
-  role: 'admin' | 'staff' | 'doctor' | 'nurse' | 'patient';
+  role: 'admin' | 'staff' | 'practitioner' | 'nurse' | 'patient';
   clinicId?: string | null;
   provider?: 'credentials' | 'google';
   image?: string;

@@ -60,7 +60,7 @@ export const authOptions: NextAuthOptions = {
             name: user.name,
             role: user.role,
             clinicId: user.clinicId,
-            practitionerId: user.practitionerId, // For doctors
+            practitionerId: user.practitionerId, // For practitioners
           };
 
           console.log('🎉 Auth: Login successful, returning user:', returnUser);
@@ -85,7 +85,7 @@ export const authOptions: NextAuthOptions = {
       }
       
       // Handle existing sessions - refresh practitionerId if missing
-      if (token.userId && !token.practitionerId && token.role === 'doctor') {
+      if (token.userId && !token.practitionerId && token.role === 'practitioner') {
         console.log('🔄 JWT: Refreshing practitionerId for existing session');
         try {
           // Read users from database to get practitionerId
@@ -123,10 +123,13 @@ export const authOptions: NextAuthOptions = {
     
     async redirect({ url, baseUrl }) {
       console.log('🔄 Redirect callback - url:', url, 'baseUrl:', baseUrl);
-      // Handle successful login redirect
+      
+      // Handle successful login redirect - let frontend handle role-based routing
       if (url.startsWith('/')) return `${baseUrl}${url}`;
       else if (new URL(url).origin === baseUrl) return url;
-      return `${baseUrl}/staff/dashboard`; // Default to staff dashboard
+      
+      // Default redirect to home - frontend will handle role-based dashboard routing
+      return baseUrl;
     }
   },
   

@@ -28,8 +28,27 @@ export default function DashboardPage() {
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/signin');
+    } else if (status === 'authenticated' && session?.user?.role) {
+      // Redirect to role-specific dashboard if someone manually navigates to /dashboard
+      console.log('🔄 Dashboard: Redirecting user with role:', session.user.role);
+      switch (session.user.role) {
+        case 'staff':
+        case 'practitioner':
+          router.replace('/staff/dashboard');
+          break;
+        case 'admin':
+          router.replace('/admin/dashboard');
+          break;
+        case 'patient':
+          router.replace('/patient/dashboard');
+          break;
+        default:
+          // Stay on generic dashboard for unknown roles
+          console.log('⚠️ Dashboard: Unknown role, staying on generic dashboard');
+          break;
+      }
     }
-  }, [status, router]);
+  }, [status, session, router]);
 
   if (status === 'loading') {
     return (
@@ -54,7 +73,7 @@ export default function DashboardPage() {
     switch (role) {
       case 'admin':
         return 'bg-red-100 text-red-800 border-red-200';
-      case 'doctor':
+      case 'practitioner':
         return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'staff':
         return 'bg-green-100 text-green-800 border-green-200';
@@ -74,7 +93,7 @@ export default function DashboardPage() {
           'Access analytics and reports',
           'Manage clinic configuration'
         ];
-      case 'doctor':
+      case 'practitioner':
         return [
           'View and manage patient appointments',
           'Access patient medical records',
@@ -109,12 +128,12 @@ export default function DashboardPage() {
           { label: 'Analytics', icon: Activity, href: '/admin/analytics' },
           { label: 'Clinic Config', icon: Building, href: '/admin/clinics' },
         ];
-      case 'doctor':
+      case 'practitioner':
         return [
-          { label: 'Today\'s Appointments', icon: Calendar, href: '/doctor/appointments' },
-          { label: 'Patient Records', icon: User, href: '/doctor/patients' },
-          { label: 'My Schedule', icon: Clock, href: '/doctor/schedule' },
-          { label: 'Settings', icon: Settings, href: '/doctor/settings' },
+          { label: 'Today\'s Appointments', icon: Calendar, href: '/staff/appointments' },
+          { label: 'Patient Records', icon: User, href: '/staff/patients' },
+          { label: 'My Schedule', icon: Clock, href: '/staff/schedule' },
+          { label: 'Settings', icon: Settings, href: '/staff/settings' },
         ];
       case 'staff':
         return [
@@ -291,7 +310,7 @@ export default function DashboardPage() {
                     </div>
                   )}
 
-                  {session.user.role === 'doctor' && (
+                  {session.user.role === 'practitioner' && (
                     <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                       <h4 className="font-medium text-green-900 mb-2">Practice Management</h4>
                       <p className="text-sm text-green-700">

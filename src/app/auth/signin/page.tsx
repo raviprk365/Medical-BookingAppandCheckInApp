@@ -24,12 +24,12 @@ export default function SignInPage() {
     setError('');
 
     try {
-      console.log('🔄 SignIn: Attempting staff sign in with:', email);
+      console.log('🔄 SignIn: Attempting sign in with:', email);
       
       const result = await signIn('credentials', {
         email,
         password,
-        redirect: false, // Handle redirect manually to see what happens
+        redirect: false, // Handle redirect manually to implement role-based routing
       });
 
       console.log('🔄 SignIn: Sign in result:', result);
@@ -39,9 +39,40 @@ export default function SignInPage() {
         setError('Invalid email or password. Please try again.');
         setIsLoading(false);
       } else if (result?.ok) {
-        console.log('✅ SignIn: Sign in successful, redirecting...');
-        // Keep loading state until redirect completes
-        window.location.href = '/staff/dashboard';
+        console.log('✅ SignIn: Sign in successful, determining redirect...');
+        
+        // Fetch the session to get user role
+        const response = await fetch('/api/auth/session');
+        const session = await response.json();
+        
+        if (session?.user?.role) {
+          console.log('🎯 SignIn: User role detected:', session.user.role);
+          
+          // Direct role-based redirection
+          let redirectUrl = '/dashboard'; // fallback
+          
+          switch (session.user.role) {
+            case 'staff':
+            case 'practitioner':
+              redirectUrl = '/staff/dashboard';
+              break;
+            case 'admin':
+              redirectUrl = '/admin/dashboard';
+              break;
+            case 'patient':
+              redirectUrl = '/patient/dashboard';
+              break;
+            default:
+              redirectUrl = '/dashboard';
+              break;
+          }
+          
+          console.log('🚀 SignIn: Redirecting to:', redirectUrl);
+          window.location.href = redirectUrl;
+        } else {
+          console.log('⚠️ SignIn: No role found, using default redirect');
+          window.location.href = '/dashboard';
+        }
         return;
       }
     } catch (error) {
@@ -62,9 +93,9 @@ export default function SignInPage() {
             <div className="flex items-center justify-center mb-4">
               <Stethoscope className="h-8 w-8 text-blue-600" />
             </div>
-            <CardTitle className="text-2xl font-bold text-center">Staff Sign In</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center">Sign In</CardTitle>
             <CardDescription className="text-center">
-              Access your healthcare staff dashboard
+              Access your Sydney Med dashboard
             </CardDescription>
           </CardHeader>
           
@@ -139,7 +170,7 @@ export default function SignInPage() {
               <p className="font-medium mb-2">Test Staff Credentials:</p>
               <div className="space-y-1">
                 <p><strong>Admin:</strong> admin@sydneymed.com / password123</p>
-                <p><strong>Doctor:</strong> doctor@sydneymed.com / password123</p>
+                <p><strong>Practitioner:</strong> doctor@sydneymed.com / password123</p>
                 <p><strong>Nurse:</strong> nurse@sydneymed.com / password123</p>
                 <p><strong>Staff:</strong> reception@sydneymed.com / password123</p>
               </div>

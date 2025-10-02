@@ -1125,7 +1125,7 @@
       "email": "sarah.chen@sydneymed.com",
       "name": "Dr. Sarah Chen",
       "password": "$2b$12$Iqe8ummXQP5Y9kEdqP0tB.Aw0VduhSxR3sMnYoEbw6x9NdM7jOK96",
-      "role": "doctor",
+      "role": "practitioner",
       "clinicId": "clinic-1",
       "practitionerId": "prac-1",
       "createdAt": "2025-01-01T00:00:00Z"
@@ -1135,7 +1135,7 @@
       "email": "james.mitchell@sydneymed.com",
       "name": "Dr. James Mitchell",
       "password": "$2b$12$Iqe8ummXQP5Y9kEdqP0tB.Aw0VduhSxR3sMnYoEbw6x9NdM7jOK96",
-      "role": "doctor",
+      "role": "practitioner",
       "clinicId": "clinic-1",
       "practitionerId": "prac-2",
       "createdAt": "2025-01-01T00:00:00Z"
@@ -1145,7 +1145,7 @@
       "email": "emily.watson@sydneymed.com",
       "name": "Dr. Emily Watson",
       "password": "$2b$12$Iqe8ummXQP5Y9kEdqP0tB.Aw0VduhSxR3sMnYoEbw6x9NdM7jOK96",
-      "role": "doctor",
+      "role": "practitioner",
       "clinicId": "clinic-2",
       "practitionerId": "prac-3",
       "createdAt": "2025-01-01T00:00:00Z"
@@ -1155,7 +1155,7 @@
       "email": "michael.nguyen@sydneymed.com",
       "name": "Dr. Michael Nguyen",
       "password": "$2b$12$Iqe8ummXQP5Y9kEdqP0tB.Aw0VduhSxR3sMnYoEbw6x9NdM7jOK96",
-      "role": "doctor",
+      "role": "practitioner",
       "clinicId": "clinic-2",
       "practitionerId": "prac-4",
       "createdAt": "2025-01-01T00:00:00Z"
@@ -1165,7 +1165,7 @@
       "email": "priya.sharma@sydneymed.com",
       "name": "Dr. Priya Sharma",
       "password": "$2b$12$Iqe8ummXQP5Y9kEdqP0tB.Aw0VduhSxR3sMnYoEbw6x9NdM7jOK96",
-      "role": "doctor",
+      "role": "practitioner",
       "clinicId": "clinic-3",
       "practitionerId": "prac-5",
       "createdAt": "2025-01-01T00:00:00Z"
@@ -1175,7 +1175,7 @@
       "email": "robert.taylor@sydneymed.com",
       "name": "Dr. Robert Taylor",
       "password": "$2b$12$Iqe8ummXQP5Y9kEdqP0tB.Aw0VduhSxR3sMnYoEbw6x9NdM7jOK96",
-      "role": "doctor",
+      "role": "practitioner",
       "clinicId": "clinic-3",
       "practitionerId": "prac-6",
       "createdAt": "2025-01-01T00:00:00Z"

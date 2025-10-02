@@ -1,6 +1,6 @@
 /**
- * Step 4: Doctor Selection with Date & Time - Combined doctor and appointment scheduling
- * Shows doctors with integrated calendar and time slot selection
+ * Step 4: Practitioner Selection with Date & Time - Combined practitioner and appointment scheduling
+ * Shows practitioners with integrated calendar and time slot selection
  */
 
 'use client';
@@ -22,32 +22,34 @@ import {
   ChevronRight
 } from 'lucide-react';
 
-interface DoctorSelectionStepProps {
+interface PractitionerSelectionStepProps {
   onNext: () => void;
   onPrevious: () => void;
   goToStep: (stepId: string) => void;
 }
 
-// Mock doctors data
-const MOCK_DOCTORS = [
+// Mock practitioners data
+const MOCK_PRACTITIONERS = [
   {
-    id: '1',
-    name: 'Dr Sue Raju',
-    title: 'The Gut Health & Hormone Doctor',
-    specialty: 'General Practitioner',
+    id: 'prac-1', // Updated to match database ID
+    name: 'Dr Sarah Chen',
+    title: 'MBBS, FRACGP',
+    specialty: 'General Practice',
     gender: 'Female',
-    qualifications: 'MBChB, FRACGP',
+    qualifications: 'MBBS, FRACGP',
     rating: 4.8,
     reviews: 156,
     avatar: '/api/placeholder/100/100',
     languages: ['English'],
-    description: 'Dr Sue\'s consults are privately billed, with a Medicare rebate:',
-    website: 'www.drsueraju.com.au',
+    description: 'Dr. Chen has over 15 years of experience in family medicine with a special interest in women\'s health and preventive care.',
+    specialties: ['General Practice', 'Women\'s Health', 'Travel Medicine'],
+    website: 'www.drsarahchen.com.au',
     billing: 'privately billed with Medicare rebate'
   },
   {
-    id: '2',
+    id: 'prac-2',
     name: 'Dr Laurence Zalokar',
+    title: 'MBBS',
     specialty: 'General Practitioner',
     gender: 'Male',
     qualifications: 'MBBS',
@@ -56,12 +58,14 @@ const MOCK_DOCTORS = [
     avatar: '/api/placeholder/100/100',
     languages: ['English'],
     description: 'Dr Laurence Zalokar is a bulk billing GP, his appointments are 10 minutes. Dr Laurence Zalokar does not prescribe Cannabis.',
+    specialties: ['General Practice'],
+    website: 'www.drlaurencezalokar.com.au',
     billing: 'bulk billing'
   }
 ];
 
 // Generate time slots for a given date with proper availability logic
-const generateTimeSlots = (date: Date, selectedDoctor: any, appointmentDuration: number = 30) => {
+const generateTimeSlots = (date: Date, selectedPractitioner: any, appointmentDuration: number = 30) => {
   const slots: { time: string; available: boolean; reason?: string }[] = [];
   const dayOfWeek = date.getDay();
   
@@ -72,12 +76,12 @@ const generateTimeSlots = (date: Date, selectedDoctor: any, appointmentDuration:
   const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   const dayName = dayNames[dayOfWeek];
   
-  // Find doctor in practitioners data to get real availability
-  const doctorId = selectedDoctor?.id;
-  let doctorSchedule: any = null;
-  
-  // Mock doctor schedules (in real app, this would come from API)
-  const doctorSchedules: Record<string, any> = {
+  // Find practitioner in practitioners data to get real availability
+  const practitionerId = selectedPractitioner?.id;
+  let practitionerSchedule: any = null;
+
+  // Mock practitioner schedules (in real app, this would come from API)
+  const practitionerSchedules: Record<string, any> = {
     '1': { // Dr Sue Raju
       availability: {
         monday: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '17:00' }],
@@ -109,12 +113,12 @@ const generateTimeSlots = (date: Date, selectedDoctor: any, appointmentDuration:
     }
   };
 
-  doctorSchedule = doctorSchedules[doctorId] || doctorSchedules['1'];
+  practitionerSchedule = practitionerSchedules[practitionerId] || practitionerSchedules['1'];
   
-  // Get doctor's availability for the day
-  const dayAvailability = doctorSchedule.availability[dayName] || [];
+  // Get practitioner's availability for the day
+  const dayAvailability = practitionerSchedule.availability[dayName] || [];
   if (dayAvailability.length === 0) {
-    return []; // Doctor not available on this day
+    return []; // Practitioner not available on this day
   }
 
   // Convert time string to minutes (e.g., "9:30" -> 570)
@@ -140,31 +144,31 @@ const generateTimeSlots = (date: Date, selectedDoctor: any, appointmentDuration:
     const startMinutes = timeToMinutes(window.start);
     const endMinutes = timeToMinutes(window.end);
     
-    // Generate slots at intervals based on appointment duration, but minimum 15 minutes
-    // This ensures proper spacing between appointments and prevents overlaps
-    const slotInterval = Math.max(15, appointmentDuration === 30 ? 30 : 15);
+    // Generate slots at intervals based on appointment duration
+    // Use the actual appointment duration as interval to prevent overlaps
+    const slotInterval = appointmentDuration;
     
     for (let currentTime = startMinutes; currentTime + appointmentDuration <= endMinutes; currentTime += slotInterval) {
       const slotEndTime = currentTime + appointmentDuration;
       let isAvailable = true;
       let reason = '';
 
-      // Check if slot conflicts with doctor's breaks
-      for (const breakTime of doctorSchedule.breaks) {
+      // Check if slot conflicts with practitioner's breaks
+      for (const breakTime of practitionerSchedule.breaks) {
         const breakStart = timeToMinutes(breakTime.start);
         const breakEnd = timeToMinutes(breakTime.end);
         
         // If appointment starts before break ends AND ends after break starts = conflict
         if (currentTime < breakEnd && slotEndTime > breakStart) {
           isAvailable = false;
-          reason = 'Doctor break';
+          reason = 'Practitioner break';
           break;
         }
       }
 
       // Check if slot conflicts with existing bookings for this specific date
       if (isAvailable) {
-        for (const booking of doctorSchedule.existingBookings) {
+        for (const booking of practitionerSchedule.existingBookings) {
           if (booking.date === dateStr) {
             const bookingStart = timeToMinutes(booking.start);
             const bookingEnd = bookingStart + booking.duration;
@@ -181,7 +185,7 @@ const generateTimeSlots = (date: Date, selectedDoctor: any, appointmentDuration:
 
       // Add buffer time (5 minutes) between appointments
       if (isAvailable) {
-        for (const booking of doctorSchedule.existingBookings) {
+        for (const booking of practitionerSchedule.existingBookings) {
           if (booking.date === dateStr) {
             const bookingStart = timeToMinutes(booking.start);
             const bookingEnd = bookingStart + booking.duration;
@@ -231,34 +235,77 @@ const generateTimeSlotsAsync = async (date: Date, selectedDoctor: any, appointme
   const doctorId = selectedDoctor?.id;
   let doctorSchedule: any = null;
   
-  // Mock doctor schedules (in real app, this would come from API)
-  const doctorSchedules: Record<string, any> = {
-    '1': { // Dr Sue Raju
-      availability: {
-        monday: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '17:00' }],
-        tuesday: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '17:00' }],
-        wednesday: [{ start: '09:00', end: '12:00' }, { start: '15:00', end: '18:00' }],
-        thursday: [{ start: '14:00', end: '19:00' }],
-        friday: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '16:00' }],
-      },
-      breaks: [{ start: '13:00', end: '14:00' }], // Lunch break
-    },
-    '2': { // Dr Laurence Zalokar
-      availability: {
-        monday: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '16:00' }],
-        tuesday: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '16:00' }],
-        wednesday: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '17:00' }],
-        thursday: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '16:00' }],
-        friday: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '15:00' }],
-      },
-      breaks: [{ start: '12:00', end: '13:00' }], // Lunch break
+  // Fetch real practitioner data from API
+  try {
+    const response = await fetch(`/api/practitioners/${doctorId}/booking`);
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success && result.data) {
+        doctorSchedule = result.data;
+        console.log('Fetched practitioner schedule for', doctorId, ':', doctorSchedule);
+      }
     }
-  };
+  } catch (error) {
+    console.error('Failed to fetch practitioner schedule:', error);
+  }
 
-  doctorSchedule = doctorSchedules[doctorId] || doctorSchedules['1'];
+  // Fallback to mock data if API fails
+  if (!doctorSchedule) {
+    const doctorSchedules: Record<string, any> = {
+      'prac-1': { // Dr Sarah Chen
+        availability: {
+          monday: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '17:00' }],
+          tuesday: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '17:00' }],
+          wednesday: [{ start: '09:00', end: '12:00' }, { start: '15:00', end: '18:00' }],
+          thursday: [{ start: '14:00', end: '19:00' }],
+          friday: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '16:00' }],
+        },
+        breaks: [{ start: '12:30', end: '13:00' }], // Lunch break
+        exceptions: []
+      },
+      'prac-2': { // Dr Laurence Zalokar
+        availability: {
+          monday: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '16:00' }],
+          tuesday: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '16:00' }],
+          wednesday: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '17:00' }],
+          thursday: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '16:00' }],
+          friday: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '15:00' }],
+        },
+        breaks: [{ start: '12:00', end: '13:00' }], // Lunch break
+        exceptions: []
+      }
+    };
+    
+    doctorSchedule = doctorSchedules[doctorId] || doctorSchedules['prac-1'];
+  }
   
   // Get doctor's availability for the day
-  const dayAvailability = doctorSchedule.availability[dayName] || [];
+  const dayAvailabilityData = doctorSchedule.availability[dayName];
+  let dayAvailability: any[] = [];
+  
+  if (dayAvailabilityData) {
+    if (Array.isArray(dayAvailabilityData)) {
+      // Already an array (from fallback mock data)
+      dayAvailability = dayAvailabilityData;
+    } else if (typeof dayAvailabilityData === 'object') {
+      // Database format with numbered keys like "0", "1", "2"
+      dayAvailability = [];
+      
+      // Extract numbered availability slots
+      for (let i = 0; i < 10; i++) { // Check up to 10 slots
+        const slot = dayAvailabilityData[i.toString()];
+        if (slot && slot.start && slot.end) {
+          dayAvailability.push({ start: slot.start, end: slot.end });
+        }
+      }
+      
+      // Also check for sessions array as backup
+      if (dayAvailability.length === 0 && dayAvailabilityData.sessions) {
+        dayAvailability = dayAvailabilityData.sessions;
+      }
+    }
+  }
+  
   if (dayAvailability.length === 0) {
     return []; // Doctor not available on this day
   }
@@ -320,9 +367,9 @@ const generateTimeSlotsAsync = async (date: Date, selectedDoctor: any, appointme
     const startMinutes = timeToMinutes(window.start);
     const endMinutes = timeToMinutes(window.end);
     
-    // Generate slots at intervals based on appointment duration, but minimum 15 minutes
-    // This ensures proper spacing between appointments and prevents overlaps
-    const slotInterval = Math.max(15, appointmentDuration === 30 ? 30 : 15);
+    // Generate slots at intervals based on appointment duration
+    // Use the actual appointment duration as interval to prevent overlaps
+    const slotInterval = appointmentDuration;
     
     for (let currentTime = startMinutes; currentTime + appointmentDuration <= endMinutes; currentTime += slotInterval) {
       const slotEndTime = currentTime + appointmentDuration;
@@ -330,15 +377,35 @@ const generateTimeSlotsAsync = async (date: Date, selectedDoctor: any, appointme
       let reason = '';
 
       // Check if slot conflicts with doctor's breaks
-      for (const breakTime of doctorSchedule.breaks) {
-        const breakStart = timeToMinutes(breakTime.start);
-        const breakEnd = timeToMinutes(breakTime.end);
+      if (isAvailable && doctorSchedule.breaks) {
+        for (const breakTime of doctorSchedule.breaks) {
+          const breakStart = timeToMinutes(breakTime.start);
+          const breakEnd = timeToMinutes(breakTime.end);
+          
+          // If appointment starts before break ends AND ends after break starts = conflict
+          if (currentTime < breakEnd && slotEndTime > breakStart) {
+            isAvailable = false;
+            reason = 'Doctor break';
+            break;
+          }
+        }
+      }
+
+      // Check if slot conflicts with date-specific exceptions (like meetings)
+      if (isAvailable && doctorSchedule.exceptions) {
+        const dateStr = date.toISOString().split('T')[0];
+        const dayException = doctorSchedule.exceptions.find((exc: any) => exc.date === dateStr);
         
-        // If appointment starts before break ends AND ends after break starts = conflict
-        if (currentTime < breakEnd && slotEndTime > breakStart) {
-          isAvailable = false;
-          reason = 'Doctor break';
-          break;
+        if (dayException && dayException.startTime && dayException.endTime) {
+          const excStart = timeToMinutes(dayException.startTime);
+          const excEnd = timeToMinutes(dayException.endTime);
+          
+          // If appointment overlaps with exception
+          if (currentTime < excEnd && slotEndTime > excStart) {
+            isAvailable = false;
+            reason = dayException.name || 'Unavailable';
+            break;
+          }
         }
       }
 
@@ -410,29 +477,78 @@ const getNextDays = (startDate: Date, days: number) => {
   return dates;
 };
 
-export const DoctorSelectionStep = ({ onNext, onPrevious }: DoctorSelectionStepProps) => {
+export const DoctorSelectionStep = ({ onNext, onPrevious }: PractitionerSelectionStepProps) => {
   const { bookingData, updateBookingData } = useBookingStore();
   const [selectedDoctorId, setSelectedDoctorId] = useState(bookingData.practitionerId || '');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState(bookingData.selectedTime || '');
   const [availableSlots, setAvailableSlots] = useState<any[]>([]);
-  const [calendarStartDate, setCalendarStartDate] = useState(new Date());
+  const [calendarStartDate, setCalendarStartDate] = useState(new Date()); // Start from today
   const [showAllTimes, setShowAllTimes] = useState(false);
+  const [practitioners, setPractitioners] = useState(MOCK_PRACTITIONERS); // Start with mock data, then replace with real data
 
-  const selectedDoctor = MOCK_DOCTORS.find(doc => doc.id === selectedDoctorId);
+  // Fetch real practitioners from API
+  useEffect(() => {
+    const fetchPractitioners = async () => {
+      try {
+        console.log('🔄 Fetching practitioners from API...');
+        const response = await fetch('/api/practitioners');
+        console.log('📡 API Response status:', response.status);
+        
+        if (response.ok) {
+          const result = await response.json();
+          console.log('📋 API Result:', result);
+          
+          if (result.success && result.data) {
+            // Transform practitioners data to match our expected format
+            const transformedDoctors = result.data.map((practitioner: any) => ({
+              id: practitioner.id,
+              name: practitioner.name,
+              title: practitioner.title,
+              specialty: practitioner.specialties?.[0] || 'General Practice',
+              gender: practitioner.gender || 'Unknown',
+              qualifications: practitioner.title,
+              rating: practitioner.rating || 4.5,
+              reviews: Math.floor(Math.random() * 200) + 50, // Random reviews for display
+              avatar: '/api/placeholder/100/100',
+              languages: ['English'],
+              description: practitioner.bio || `${practitioner.name} is an experienced practitioner.`,
+              specialties: practitioner.specialties || ['General Practice'],
+              website: `www.${practitioner.name.toLowerCase().replace(/[^a-z]/g, '')}.com.au`,
+              billing: 'Medicare rebate available'
+            }));
+            
+            console.log('✅ Transformed doctors:', transformedDoctors);
+            setPractitioners(transformedDoctors);
+          } else {
+            console.log('⚠️ API response missing success/data:', result);
+          }
+        } else {
+          console.log('❌ API response not ok:', response.status, response.statusText);
+        }
+      } catch (error) {
+        console.error('💥 Failed to fetch practitioners, using mock data:', error);
+        // Keep using MOCK_DOCTORS as fallback
+      }
+    };
+
+    fetchPractitioners();
+  }, []);
+
+  const selectedPractitioner = practitioners.find(practitioner => practitioner.id === selectedDoctorId);
 
   // Generate available time slots when doctor or date changes
   useEffect(() => {
     const loadTimeSlots = async () => {
       if (selectedDoctorId && selectedDate) {
         const duration = bookingData.duration || 30; // Get duration from booking data
-        const slots = await generateTimeSlotsAsync(selectedDate, selectedDoctor, duration);
+        const slots = await generateTimeSlotsAsync(selectedDate, selectedPractitioner, duration);
         setAvailableSlots(slots);
       }
     };
     
     loadTimeSlots();
-  }, [selectedDoctorId, selectedDate, selectedDoctor, bookingData.duration]);
+  }, [selectedDoctorId, selectedDate, selectedPractitioner, bookingData.duration]);
 
   // Handle doctor selection
   const handleDoctorSelect = (doctorId: string) => {
@@ -447,6 +563,15 @@ export const DoctorSelectionStep = ({ onNext, onPrevious }: DoctorSelectionStepP
 
   // Handle date selection
   const handleDateSelect = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day for comparison
+    
+    // Prevent selection of past dates
+    if (date < today) {
+      alert('Cannot select past dates. Please choose a current or future date.');
+      return;
+    }
+    
     setSelectedDate(date);
     setSelectedTime(''); // Reset time when date changes
     setShowAllTimes(false); // Reset show all times
@@ -458,6 +583,28 @@ export const DoctorSelectionStep = ({ onNext, onPrevious }: DoctorSelectionStepP
 
   // Handle time selection
   const handleTimeSelect = (time: string) => {
+    const now = new Date();
+    const selectedDateTime = new Date(selectedDate);
+    
+    // Parse the selected time
+    const [timeStr, period] = time.toLowerCase().split(' ');
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    let hour24 = hours;
+    
+    if (period === 'pm' && hours !== 12) {
+      hour24 += 12;
+    } else if (period === 'am' && hours === 12) {
+      hour24 = 0;
+    }
+    
+    selectedDateTime.setHours(hour24, minutes, 0, 0);
+    
+    // Prevent selection of past times for today
+    if (selectedDate.toDateString() === now.toDateString() && selectedDateTime <= now) {
+      alert('Cannot select past times. Please choose a future time slot.');
+      return;
+    }
+    
     setSelectedTime(time);
     updateBookingData({ selectedTime: time });
   };
@@ -465,8 +612,19 @@ export const DoctorSelectionStep = ({ onNext, onPrevious }: DoctorSelectionStepP
   // Navigate calendar
   const navigateCalendar = (direction: 'prev' | 'next') => {
     const newDate = new Date(calendarStartDate);
-    newDate.setDate(newDate.getDate() + (direction === 'next' ? 5 : -5));
-    setCalendarStartDate(newDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day for comparison
+    
+    if (direction === 'next') {
+      newDate.setDate(newDate.getDate() + 5);
+      setCalendarStartDate(newDate);
+    } else if (direction === 'prev') {
+      newDate.setDate(newDate.getDate() - 5);
+      // Prevent going to dates before today
+      if (newDate >= today) {
+        setCalendarStartDate(newDate);
+      }
+    }
   };
 
   // Validate and proceed
@@ -493,33 +651,33 @@ export const DoctorSelectionStep = ({ onNext, onPrevious }: DoctorSelectionStepP
 
   return (
     <div className="space-y-6">
-      {/* Doctors List */}
+      {/* Practitioners List */}
       <div className="space-y-4">
-        {MOCK_DOCTORS.map((doctor) => (
+        {practitioners.map((practitioner) => (
           <Card
-            key={doctor.id}
+            key={practitioner.id}
             className={`cursor-pointer border-2 transition-all duration-200 ${
-              selectedDoctorId === doctor.id 
+              selectedDoctorId === practitioner.id 
                 ? 'border-primary bg-primary/5 shadow-md' 
                 : 'border-muted hover:border-primary/50'
             }`}
-            onClick={() => handleDoctorSelect(doctor.id)}
+            onClick={() => handleDoctorSelect(practitioner.id)}
           >
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
-                {/* Doctor Info */}
+                {/* Practitioner Info */}
                 <div className="flex items-start gap-4 flex-1">
                   <Avatar className="w-16 h-16">
-                    <AvatarImage src={doctor.avatar} alt={doctor.name} />
+                    <AvatarImage src={practitioner.avatar} alt={practitioner.name} />
                     <AvatarFallback>
-                      {doctor.name.split(' ').map(n => n[0]).join('')}
+                      {practitioner.name.split(' ').map((n: string) => n[0]).join('')}
                     </AvatarFallback>
                   </Avatar>
 
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-3">
                       <Button
-                        variant={selectedDoctorId === doctor.id ? "default" : "default"}
+                        variant={selectedDoctorId === practitioner.id ? "default" : "default"}
                         size="sm"
                         className="text-xs bg-green-600 hover:bg-green-700 text-white"
                       >
@@ -528,25 +686,25 @@ export const DoctorSelectionStep = ({ onNext, onPrevious }: DoctorSelectionStepP
                     </div>
                     
                     <h3 className="text-lg font-semibold mb-1">
-                      {doctor.name} {doctor.title && `(${doctor.title})`}
+                      {practitioner.name} {practitioner.title && `(${practitioner.title})`}
                     </h3>
                     
                     <p className="text-sm text-muted-foreground mb-2">
-                      {doctor.specialty}, {doctor.gender}, {doctor.qualifications}
+                      {practitioner.specialty}, {practitioner.gender}, {practitioner.qualifications}
                     </p>
                     
                     <p className="text-sm text-muted-foreground mb-2">
-                      Speaks {doctor.languages.join(', ')}
+                      Speaks {practitioner.languages.join(', ')}
                     </p>
 
-                    {doctor.website && (
+                    {practitioner.website && (
                       <p className="text-sm text-muted-foreground mb-2">
-                        To find out more about {doctor.name.split(' ')[1]}, visit {doctor.website}
+                        To find out more about {practitioner.name.split(' ')[1]}, visit {practitioner.website}
                       </p>
                     )}
 
                     <p className="text-sm text-muted-foreground mb-3">
-                      {doctor.description}
+                      {practitioner.description}
                     </p>
 
                     <button 
@@ -554,7 +712,7 @@ export const DoctorSelectionStep = ({ onNext, onPrevious }: DoctorSelectionStepP
                       onClick={(e) => {
                         e.stopPropagation();
                         // Handle read more functionality
-                        console.log('Read more clicked for', doctor.name);
+                        console.log('Read more clicked for', practitioner.name);
                       }}
                     >
                       Read more
@@ -562,8 +720,8 @@ export const DoctorSelectionStep = ({ onNext, onPrevious }: DoctorSelectionStepP
                   </div>
                 </div>
 
-                {/* Calendar Section - Only show for selected doctor */}
-                {selectedDoctorId === doctor.id && (
+                {/* Calendar Section - Only show for selected practitioner */}
+                {selectedDoctorId === practitioner.id && (
                   <div className="ml-6 min-w-[400px]">
                     {/* Calendar Header with Date Navigation */}
                     <div className="flex items-center justify-between mb-4">
@@ -580,22 +738,29 @@ export const DoctorSelectionStep = ({ onNext, onPrevious }: DoctorSelectionStepP
                       
                       <div className="flex gap-1">
                         {calendarDays.map((date, index) => {
-                          const isToday = date.toDateString() === new Date().toDateString();
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const isToday = date.toDateString() === today.toDateString();
                           const isSelected = selectedDate.toDateString() === date.toDateString();
+                          const isPastDate = date < today;
                           
                           return (
                             <div
                               key={index}
-                              className={`text-center cursor-pointer p-2 rounded-md transition-colors min-w-[60px] ${
-                                isSelected
-                                  ? 'bg-green-600 text-white'
+                              className={`text-center p-2 rounded-md transition-colors min-w-[60px] ${
+                                isPastDate
+                                  ? 'opacity-50 cursor-not-allowed text-gray-400'
+                                  : isSelected
+                                  ? 'bg-green-600 text-white cursor-pointer'
                                   : isToday
-                                  ? 'bg-gray-100 border'
-                                  : 'hover:bg-muted'
+                                  ? 'bg-gray-100 border cursor-pointer'
+                                  : 'hover:bg-muted cursor-pointer'
                               }`}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleDateSelect(date);
+                                if (!isPastDate) {
+                                  handleDateSelect(date);
+                                }
                               }}
                             >
                               <div className="text-xs font-medium">
