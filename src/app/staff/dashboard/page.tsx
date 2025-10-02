@@ -27,7 +27,8 @@ export default function StaffDashboard() {
   const { 
     appointments: todaysAppointments, 
     loading: appointmentsLoading,
-    updateAppointmentStatus 
+    updateAppointmentStatus,
+    updateAppointmentNotes
   } = useTodaysAppointments();
   const router = useRouter();
 
@@ -90,6 +91,10 @@ export default function StaffDashboard() {
     }
   };
 
+  const handleNotesUpdate = (appointmentId: string, notes: string) => {
+    updateAppointmentNotes(appointmentId, notes);
+  };
+
   return (
     <div className="min-h-screen flex bg-gray-50">
       {/* Sidebar */}
@@ -107,6 +112,21 @@ export default function StaffDashboard() {
               <p className="text-gray-600 mt-1">
                 Here's what's happening at your clinic today
               </p>
+              {/* Role-based filtering indicator */}
+              {currentUser?.role === 'practitioner' && (
+                <div className="mt-2">
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                    Showing your appointments and data only
+                  </Badge>
+                </div>
+              )}
+              {(currentUser?.role === 'admin' || currentUser?.role === 'staff' || currentUser?.role === 'nurse') && (
+                <div className="mt-2">
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    Showing data for all practitioners
+                  </Badge>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <Button variant="outline" size="sm">
@@ -230,6 +250,7 @@ export default function StaffDashboard() {
                           }}
                           onStatusChange={updateAppointmentStatus}
                           onContact={handleAppointmentAction}
+                          onNotesUpdate={handleNotesUpdate}
                         />
                       ))}
                       {todaysAppointments.length > 4 && (

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { useWaitingList } from '@/hooks/useAppointments';
 import { Sidebar } from '@/components/Sidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,6 +40,7 @@ interface WaitingPatient {
 }
 
 export default function WaitingPage() {
+  const { data: session } = useSession();
   const { 
     waitingAppointments, 
     loading, 
@@ -171,6 +173,21 @@ export default function WaitingPage() {
               <p className="text-gray-600 mt-1">
                 Queue management • Last updated: {format(currentTime, 'h:mm a')}
               </p>
+              {/* Role-based filtering indicator */}
+              {session?.user?.role === 'practitioner' && (
+                <div className="mt-2">
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                    Showing your waiting patients only
+                  </Badge>
+                </div>
+              )}
+              {(session?.user?.role === 'admin' || session?.user?.role === 'staff' || session?.user?.role === 'nurse') && (
+                <div className="mt-2">
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    Showing all practitioners' waiting patients
+                  </Badge>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <Button variant="outline" size="sm" onClick={refetch}>

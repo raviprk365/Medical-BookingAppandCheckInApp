@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
+import { useSession } from 'next-auth/react';
 import { Calendar as BigCalendar, momentLocalizer, Views, View } from 'react-big-calendar';
 import moment from 'moment';
 import { useAppointments } from '@/hooks/useAppointments';
@@ -102,6 +103,7 @@ const CustomToolbar = ({ label, onNavigate, onView, view }: any) => {
 };
 
 export default function CalendarPage() {
+  const { data: session } = useSession();
   const { appointments, practitioners, loading, error } = useAppointments();
   const [view, setView] = useState<View>(Views.WEEK);
   const [date, setDate] = useState(new Date());
@@ -236,11 +238,26 @@ export default function CalendarPage() {
               <p className="text-gray-600 mt-1">
                 Schedule management and appointment overview
               </p>
+              {/* Role-based filtering indicator */}
+              {session?.user?.role === 'practitioner' && (
+                <div className="mt-2">
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                    Showing your appointments only
+                  </Badge>
+                </div>
+              )}
+              {(session?.user?.role === 'admin' || session?.user?.role === 'staff' || session?.user?.role === 'nurse') && (
+                <div className="mt-2">
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    Showing all practitioners' appointments
+                  </Badge>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <Button variant="outline" size="sm">
                 <Users className="h-4 w-4 mr-2" />
-                Doctors
+                Practitioners
               </Button>
               <Button size="sm">
                 <Plus className="h-4 w-4 mr-2" />

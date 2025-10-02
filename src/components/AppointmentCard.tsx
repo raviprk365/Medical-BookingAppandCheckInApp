@@ -4,6 +4,9 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { useSession } from 'next-auth/react';
+import { useState } from 'react';
 import { 
   Clock, 
   User, 
@@ -12,7 +15,9 @@ import {
   MoreVertical,
   CheckCircle,
   XCircle,
-  Edit3
+  Edit3,
+  FileText,
+  Save
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -38,6 +43,7 @@ interface AppointmentCardProps {
   onReschedule?: (appointmentId: string) => void;
   onCancel?: (appointmentId: string) => void;
   onContact?: (appointmentId: string, method: 'call' | 'message') => void;
+  onNotesUpdate?: (appointmentId: string, notes: string) => void;
   className?: string;
 }
 
@@ -80,10 +86,16 @@ export function AppointmentCard({
   onReschedule,
   onCancel,
   onContact,
+  onNotesUpdate,
   className 
 }: AppointmentCardProps) {
+  const { data: session } = useSession();
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [tempNotes, setTempNotes] = useState(appointment.notes || '');
+  
   const status = statusConfig[appointment.status];
   const StatusIcon = status.icon;
+  const isPractitioner = session?.user?.role === 'practitioner';
 
   return (
     <Card className={cn('hover:shadow-md transition-shadow', className)}>
@@ -124,6 +136,63 @@ export function AppointmentCard({
                   Note: {appointment.notes}
                 </p>
               )}
+
+              {/* Notes Section for Practitioners */}
+              {isPractitioner && (
+                <div className="mt-3 border-t pt-3">
+                  {isEditingNotes ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        value={tempNotes}
+                        onChange={(e) => setTempNotes(e.target.value)}
+                        placeholder="Add notes for tracking..."
+                        rows={3}
+                        className="text-sm"
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            onNotesUpdate?.(appointment.id, tempNotes);
+                            setIsEditingNotes(false);
+                          }}
+                        >
+                          <Save className="h-3 w-3 mr-1" />
+                          Save
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setTempNotes(appointment.notes || '');
+                            setIsEditingNotes(false);
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        {appointment.notes ? (
+                          <p className="text-sm text-gray-700">{appointment.notes}</p>
+                        ) : (
+                          <p className="text-sm text-gray-400 italic">No notes added</p>
+                        )}
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setIsEditingNotes(true)}
+                      >
+                        <FileText className="h-3 w-3 mr-1" />
+                        {appointment.notes ? 'Edit' : 'Add'} Notes
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -149,8 +218,8 @@ export function AppointmentCard({
               </Button>
             )}
 
-            {/* Contact Buttons */}
-            {appointment.phone && (
+            {/* Contact Buttons - Only show for non-practitioners */}
+            {!isPractitioner && appointment.phone && (
               <Button
                 size="sm"
                 variant="outline"
@@ -160,13 +229,15 @@ export function AppointmentCard({
               </Button>
             )}
 
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => onContact?.(appointment.id, 'message')}
-            >
-              <MessageSquare className="h-4 w-4" />
-            </Button>
+            {!isPractitioner && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onContact?.(appointment.id, 'message')}
+              >
+                <MessageSquare className="h-4 w-4" />
+              </Button>
+            )}
 
             {/* More Actions */}
             <DropdownMenu>

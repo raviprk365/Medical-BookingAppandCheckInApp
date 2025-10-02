@@ -121,7 +121,7 @@
       "appointmentType": "follow-up",
       "reason": "Follow-up for previous consultation",
       "urgency": "routine",
-      "status": "confirmed",
+      "status": "waiting",
       "notes": "Check test results",
       "medications": "Birth control pill",
       "allergies": "None known",
@@ -130,7 +130,7 @@
       "relationship": "",
       "confirmationCode": "APT002",
       "createdAt": "2025-10-01T11:30:00Z",
-      "updatedAt": "2025-10-01T11:30:00Z"
+      "updatedAt": "2025-10-02T09:00:56.275Z"
     },
     {
       "patientId": "patient-1",
@@ -230,8 +230,8 @@
       "appointmentType": "general-consultation",
       "reason": "reason updated",
       "urgency": "routine",
-      "status": "confirmed",
-      "notes": "",
+      "status": "no-show",
+      "notes": "not visited",
       "medications": "",
       "allergies": "",
       "symptoms": "",
@@ -240,7 +240,7 @@
       "id": "apt-1759385437769-znf4h9gwnx",
       "confirmationCode": "APTD0HZAZ",
       "createdAt": "2025-10-02T06:10:37.769Z",
-      "updatedAt": "2025-10-02T06:10:37.769Z"
+      "updatedAt": "2025-10-02T09:33:36.131Z"
     },
     {
       "patientId": "patient-1759385437734-t6jcfw4pdv",
@@ -1113,7 +1113,7 @@
   "users": [
     {
       "id": "user-1",
-      "email": "admin@sydneymed.com",
+      "email": "admin@nexapprove.com.au",
       "name": "Admin User",
       "password": "$2b$12$Iqe8ummXQP5Y9kEdqP0tB.Aw0VduhSxR3sMnYoEbw6x9NdM7jOK96",
       "role": "admin",

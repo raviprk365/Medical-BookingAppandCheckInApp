@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { useTodaysAppointments } from '@/hooks/useAppointments';
 import { Sidebar } from '@/components/Sidebar';
 import { AppointmentCard } from '@/components/AppointmentCard';
@@ -31,11 +32,13 @@ import {
 import { format } from 'date-fns';
 
 export default function TodaysAppointments() {
+  const { data: session } = useSession();
   const { 
     appointments, 
     loading, 
     error, 
     updateAppointmentStatus, 
+    updateAppointmentNotes,
     refetch 
   } = useTodaysAppointments();
   
@@ -100,6 +103,10 @@ export default function TodaysAppointments() {
     updateAppointmentStatus(appointmentId, 'cancelled');
   };
 
+  const handleNotesUpdate = (appointmentId: string, notes: string) => {
+    updateAppointmentNotes(appointmentId, notes);
+  };
+
   if (error) {
     return (
       <div className="min-h-screen flex bg-gray-50">
@@ -137,6 +144,21 @@ export default function TodaysAppointments() {
               <p className="text-gray-600 mt-1">
                 {format(new Date(), 'EEEE, MMMM do, yyyy')} • {filteredAppointments.length} of {appointments.length} appointments
               </p>
+              {/* Role-based filtering indicator */}
+              {session?.user?.role === 'practitioner' && (
+                <div className="mt-2">
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                    Showing your appointments only
+                  </Badge>
+                </div>
+              )}
+              {(session?.user?.role === 'admin' || session?.user?.role === 'staff' || session?.user?.role === 'nurse') && (
+                <div className="mt-2">
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    Showing all practitioners' appointments
+                  </Badge>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <Button variant="outline" size="sm" onClick={refetch}>
@@ -308,6 +330,7 @@ export default function TodaysAppointments() {
                     onReschedule={handleReschedule}
                     onCancel={handleCancel}
                     onContact={handleAppointmentAction}
+                    onNotesUpdate={handleNotesUpdate}
                   />
                 ))
             )}

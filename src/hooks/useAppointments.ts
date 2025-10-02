@@ -2,7 +2,14 @@
 
 import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { format } from 'date-fns';
+import { 
+  filterAppointmentsByRole, 
+  filterDashboardMetricsByRole,
+  getApiFilterByRole,
+  UserSession 
+} from '@/lib/roleBasedFiltering';
 
 // Types
 export interface Patient {
@@ -99,8 +106,21 @@ export const queryKeys = {
 } as const;
 
 // API Functions
-const fetchAppointments = async (): Promise<Appointment[]> => {
-  const response = await fetch(`${API_BASE}/appointments`);
+const fetchAppointments = async (filters?: any): Promise<Appointment[]> => {
+  let url = `${API_BASE}/appointments`;
+  
+  // Add query parameters for filtering
+  if (filters && Object.keys(filters).length > 0) {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        params.append(key, String(value));
+      }
+    });
+    url += `?${params.toString()}`;
+  }
+  
+  const response = await fetch(url);
   if (!response.ok) throw new Error('Failed to fetch appointments');
   return response.json();
 };
@@ -137,22 +157,46 @@ const updateAppointmentStatusAPI = async ({
   return response.json();
 };
 
-// Custom hook for fetching appointments - OPTIMIZED WITH REACT QUERY
+// Custom hook for fetching appointments - OPTIMIZED WITH REACT QUERY + ROLE-BASED FILTERING
 export function useAppointments(date?: string) {
+  const { data: session } = useSession();
   const queryClient = useQueryClient();
   
+  // Create user session object for filtering
+  const userSession: UserSession = {
+    id: session?.user?.id || '',
+    role: session?.user?.role || 'patient',
+    practitionerId: (session?.user as any)?.practitionerId,
+    clinicId: session?.user?.clinicId
+  };
+  
+  // Get API filters based on user role
+  const apiFilters = getApiFilterByRole(userSession);
+  
   const { data: appointments = [], isLoading, error } = useQuery({
-    queryKey: date ? queryKeys.appointmentsByDate(date) : queryKeys.appointments,
-    queryFn: fetchAppointments,
+    queryKey: [...queryKeys.appointments, userSession.role, userSession.practitionerId, date],
+    queryFn: () => fetchAppointments(apiFilters),
     staleTime: 2 * 60 * 1000, // 2 minutes - data stays fresh
     refetchInterval: 3 * 60 * 1000, // 3 minutes - OPTIMIZED from 30 seconds!
     refetchIntervalInBackground: false, // Don't refetch when tab not active
+    enabled: !!session?.user, // Only fetch when user is authenticated
     select: (data) => {
+      // Apply client-side role-based filtering using the hook's Appointment type
+      let filteredData = data;
+      
+      // Apply role-based filtering logic inline
+      if (userSession.role === 'practitioner' && userSession.practitionerId) {
+        filteredData = data.filter(
+          appointment => appointment.practitionerId === userSession.practitionerId
+        );
+      }
+      // Admin, staff, and nurse see all data (no filtering needed)
+      
       // Filter appointments by date if provided
       if (date) {
-        return data.filter(apt => apt.appointmentDate === date);
+        filteredData = filteredData.filter(apt => apt.appointmentDate === date);
       }
-      return data;
+      return filteredData;
     }
   });
 
@@ -207,6 +251,30 @@ export function useAppointments(date?: string) {
     }
   });
 
+  // Mutation for updating appointment notes
+  const updateNotesMutation = useMutation({
+    mutationFn: async ({ appointmentId, notes }: { appointmentId: string; notes: string }) => {
+      const response = await fetch(`${API_BASE}/appointments/${appointmentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          notes,
+          updatedAt: new Date().toISOString()
+        }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to update appointment notes');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointments });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboardMetrics });
+    },
+    onError: (error) => {
+      console.error('Failed to update appointment notes:', error);
+    }
+  });
+
   // Enrich appointments with patient and practitioner data
   const enrichedAppointments = appointments.map(appointment => {
     const patient = patients.find(p => p.id === appointment.patientId);
@@ -228,24 +296,44 @@ export function useAppointments(date?: string) {
     error: error?.message || null,
     refetch: () => queryClient.invalidateQueries({ queryKey: queryKeys.appointments }),
     updateAppointmentStatus: (appointmentId: string, newStatus: string) => 
-      updateStatusMutation.mutate({ appointmentId, status: newStatus })
+      updateStatusMutation.mutate({ appointmentId, status: newStatus }),
+    updateAppointmentNotes: (appointmentId: string, notes: string) =>
+      updateNotesMutation.mutate({ appointmentId, notes })
   };
 }
 
-// Custom hook for dashboard metrics - OPTIMIZED WITH REACT QUERY
+// Custom hook for dashboard metrics - OPTIMIZED WITH REACT QUERY + ROLE-BASED FILTERING
 export function useDashboardMetrics() {
+  const { data: session } = useSession();
+  
+  // Create user session object for filtering
+  const userSession: UserSession = {
+    id: session?.user?.id || '',
+    role: session?.user?.role || 'patient',
+    practitionerId: (session?.user as any)?.practitionerId,
+    clinicId: session?.user?.clinicId
+  };
+  
   return useQuery({
-    queryKey: queryKeys.dashboardMetrics,
+    queryKey: [...queryKeys.dashboardMetrics, userSession.role, userSession.practitionerId],
     queryFn: async () => {
+      const apiFilters = getApiFilterByRole(userSession);
       const [appointments, patients] = await Promise.all([
-        fetchAppointments(),
+        fetchAppointments(apiFilters),
         fetchPatients()
       ]);
 
       const today = format(new Date(), 'yyyy-MM-dd');
-      const todaysAppointments = appointments.filter((apt: Appointment) => 
+      let todaysAppointments = appointments.filter((apt: Appointment) => 
         apt.appointmentDate === today
       );
+
+      // Apply role-based filtering for practitioners
+      if (userSession.role === 'practitioner' && userSession.practitionerId) {
+        todaysAppointments = todaysAppointments.filter(
+          apt => apt.practitionerId === userSession.practitionerId
+        );
+      }
 
       const waitingPatients = todaysAppointments.filter((apt: Appointment) => 
         apt.status === 'waiting'
@@ -263,18 +351,32 @@ export function useDashboardMetrics() {
         ? Math.round((cancelledToday / todaysAppointments.length) * 100)
         : 0;
 
+      // Calculate total patients based on role
+      let totalPatients = patients.length;
+      if (userSession.role === 'practitioner' && userSession.practitionerId) {
+        // For practitioners, count only unique patients who have appointments with them
+        const practitionerPatientIds = appointments
+          .filter(apt => apt.practitionerId === userSession.practitionerId)
+          .map(apt => apt.patientId);
+        const uniquePatientIds = Array.from(new Set(practitionerPatientIds));
+        totalPatients = uniquePatientIds.length;
+      }
+
       return {
-        totalPatients: patients.length,
+        totalPatients,
         todaysAppointments: todaysAppointments.length,
         waitingPatients,
         completedToday,
         pendingApprovals: 5, // This would come from a real API
-        cancellationRate
+        cancellationRate,
+        userRole: userSession.role,
+        isFiltered: userSession.role === 'practitioner'
       };
     },
     staleTime: 2 * 60 * 1000, // 2 minutes - OPTIMIZED!
     refetchInterval: 3 * 60 * 1000, // 3 minutes - MUCH BETTER than 30 seconds!
     refetchIntervalInBackground: false, // Save battery/bandwidth
+    enabled: !!session?.user, // Only fetch when user is authenticated
   });
 }
 
@@ -306,12 +408,30 @@ export function useWaitingList() {
   };
 }
 
-// Custom hook for appointment trends and analytics - OPTIMIZED WITH REACT QUERY
+// Custom hook for appointment trends and analytics - OPTIMIZED WITH REACT QUERY + ROLE-BASED FILTERING
 export function useAppointmentAnalytics() {
+  const { data: session } = useSession();
+  
+  // Create user session object for filtering
+  const userSession: UserSession = {
+    id: session?.user?.id || '',
+    role: session?.user?.role || 'patient',
+    practitionerId: (session?.user as any)?.practitionerId,
+    clinicId: session?.user?.clinicId
+  };
+  
   return useQuery({
-    queryKey: queryKeys.appointmentAnalytics,
+    queryKey: [...queryKeys.appointmentAnalytics, userSession.role, userSession.practitionerId],
     queryFn: async () => {
-      const appointments = await fetchAppointments();
+      const apiFilters = getApiFilterByRole(userSession);
+      let appointments = await fetchAppointments(apiFilters);
+      
+      // Apply client-side role-based filtering for practitioners
+      if (userSession.role === 'practitioner' && userSession.practitionerId) {
+        appointments = appointments.filter(
+          apt => apt.practitionerId === userSession.practitionerId
+        );
+      }
       
       // Calculate appointment trends for the last 7 days
       const trends = [];
@@ -362,11 +482,14 @@ export function useAppointmentAnalytics() {
 
       return {
         appointmentTrends: trends,
-        statusDistribution
+        statusDistribution,
+        userRole: userSession.role,
+        isFiltered: userSession.role === 'practitioner'
       };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes - Analytics change less frequently
     refetchInterval: 10 * 60 * 1000, // 10 minutes - MUCH BETTER than 30 seconds!
     refetchIntervalInBackground: false,
+    enabled: !!session?.user, // Only fetch when user is authenticated
   });
 }

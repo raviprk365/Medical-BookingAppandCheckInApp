@@ -41,9 +41,9 @@ export const Header = () => {
         </Link>
         
         <nav className="hidden md:flex items-center space-x-6">
-          <Link href="/search" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          {/* <Link href="/search" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Find Practitioners
-          </Link>
+          </Link> */}
           <Link href="/about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             About
           </Link>
@@ -81,9 +81,9 @@ export const Header = () => {
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/auth/signin">Sign In</Link>
               </Button>
-              <Button variant="outline" size="sm" asChild>
+              {/* <Button variant="outline" size="sm" asChild>
                 <Link href="/auth/signup">Sign Up</Link>
-              </Button>
+              </Button> */}
               <Button variant="default" size="sm" asChild>
                 <Link href="/booking">Book Appointment</Link>
               </Button>
