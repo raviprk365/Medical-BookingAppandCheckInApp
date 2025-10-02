@@ -1,32 +1,9 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 
-// Types
-export interface Patient {
-  id: string;
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string;
-  phone: string;
-  email: string;
-  address: string;
-  emergencyContact: {
-    name: string;
-    phone: string;
-    relationship: string;
-  };
-  medicalHistory: {
-    allergies: string;
-    medications: string;
-    conditions: string[];
-  };
-  createdAt: string;
-  updatedAt: string;
-}
-
+// Types (same as before)
 export interface Appointment {
   id: string;
   patientId: string;
@@ -50,6 +27,28 @@ export interface Appointment {
   updatedAt: string;
 }
 
+export interface Patient {
+  id: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  phone: string;
+  email: string;
+  address: string;
+  emergencyContact: {
+    name: string;
+    phone: string;
+    relationship: string;
+  };
+  medicalHistory: {
+    allergies: string;
+    medications: string;
+    conditions: string[];
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Practitioner {
   id: string;
   clinicId: string;
@@ -65,24 +64,6 @@ export interface Practitioner {
       end: string;
     }>;
   };
-}
-
-export interface Clinic {
-  id: string;
-  name: string;
-  address: {
-    street: string;
-    suburb: string;
-    postcode: string;
-    lat: number;
-    lng: number;
-  };
-  phone: string;
-  email: string;
-  openHours: {
-    [key: string]: string;
-  };
-  services: string[];
 }
 
 // Base API URL
@@ -117,7 +98,7 @@ const fetchPractitioners = async (): Promise<Practitioner[]> => {
   return response.json();
 };
 
-const updateAppointmentStatusAPI = async ({ 
+const updateAppointmentStatus = async ({ 
   appointmentId, 
   status 
 }: { 
@@ -137,15 +118,14 @@ const updateAppointmentStatusAPI = async ({
   return response.json();
 };
 
-// Custom hook for fetching appointments - OPTIMIZED WITH REACT QUERY
+// 🎯 OPTIMIZED HOOKS WITH REACT QUERY
+
 export function useAppointments(date?: string) {
-  const queryClient = useQueryClient();
-  
   const { data: appointments = [], isLoading, error } = useQuery({
     queryKey: date ? queryKeys.appointmentsByDate(date) : queryKeys.appointments,
     queryFn: fetchAppointments,
     staleTime: 2 * 60 * 1000, // 2 minutes - data stays fresh
-    refetchInterval: 3 * 60 * 1000, // 3 minutes - OPTIMIZED from 30 seconds!
+    refetchInterval: 3 * 60 * 1000, // 3 minutes - background refresh
     refetchIntervalInBackground: false, // Don't refetch when tab not active
     select: (data) => {
       // Filter appointments by date if provided
@@ -155,29 +135,6 @@ export function useAppointments(date?: string) {
       return data;
     }
   });
-
-  // Prefetch related data when appointments load
-  useEffect(() => {
-    if (appointments.length > 0) {
-      // Prefetch patients data if not already cached
-      if (!queryClient.getQueryData(queryKeys.patients)) {
-        queryClient.prefetchQuery({
-          queryKey: queryKeys.patients,
-          queryFn: fetchPatients,
-          staleTime: 10 * 60 * 1000,
-        });
-      }
-      
-      // Prefetch practitioners data if not already cached
-      if (!queryClient.getQueryData(queryKeys.practitioners)) {
-        queryClient.prefetchQuery({
-          queryKey: queryKeys.practitioners,
-          queryFn: fetchPractitioners,
-          staleTime: 15 * 60 * 1000,
-        });
-      }
-    }
-  }, [appointments.length, queryClient]);
 
   const { data: patients = [] } = useQuery({
     queryKey: queryKeys.patients,
@@ -193,11 +150,12 @@ export function useAppointments(date?: string) {
     refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 
-  // Mutation for updating appointment status with optimistic updates
+  // Mutation for updating appointment status
+  const queryClient = useQueryClient();
   const updateStatusMutation = useMutation({
-    mutationFn: updateAppointmentStatusAPI,
+    mutationFn: updateAppointmentStatus,
     onSuccess: () => {
-      // Invalidate and refetch related queries for real-time updates
+      // Invalidate and refetch related queries
       queryClient.invalidateQueries({ queryKey: queryKeys.appointments });
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboardMetrics });
       queryClient.invalidateQueries({ queryKey: queryKeys.appointmentAnalytics });
@@ -226,13 +184,12 @@ export function useAppointments(date?: string) {
     practitioners,
     loading: isLoading,
     error: error?.message || null,
-    refetch: () => queryClient.invalidateQueries({ queryKey: queryKeys.appointments }),
-    updateAppointmentStatus: (appointmentId: string, newStatus: string) => 
-      updateStatusMutation.mutate({ appointmentId, status: newStatus })
+    updateAppointmentStatus: (appointmentId: string, status: string) => 
+      updateStatusMutation.mutate({ appointmentId, status })
   };
 }
 
-// Custom hook for dashboard metrics - OPTIMIZED WITH REACT QUERY
+// 📊 Dashboard Metrics with React Query
 export function useDashboardMetrics() {
   return useQuery({
     queryKey: queryKeys.dashboardMetrics,
@@ -243,19 +200,19 @@ export function useDashboardMetrics() {
       ]);
 
       const today = format(new Date(), 'yyyy-MM-dd');
-      const todaysAppointments = appointments.filter((apt: Appointment) => 
+      const todaysAppointments = appointments.filter(apt => 
         apt.appointmentDate === today
       );
 
-      const waitingPatients = todaysAppointments.filter((apt: Appointment) => 
+      const waitingPatients = todaysAppointments.filter(apt => 
         apt.status === 'waiting'
       ).length;
 
-      const completedToday = todaysAppointments.filter((apt: Appointment) => 
+      const completedToday = todaysAppointments.filter(apt => 
         apt.status === 'completed'
       ).length;
 
-      const cancelledToday = todaysAppointments.filter((apt: Appointment) => 
+      const cancelledToday = todaysAppointments.filter(apt => 
         apt.status === 'cancelled' || apt.status === 'no-show'
       ).length;
 
@@ -268,45 +225,17 @@ export function useDashboardMetrics() {
         todaysAppointments: todaysAppointments.length,
         waitingPatients,
         completedToday,
-        pendingApprovals: 5, // This would come from a real API
+        pendingApprovals: 5, // From real API
         cancellationRate
       };
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes - OPTIMIZED!
+    staleTime: 2 * 60 * 1000, // 2 minutes
     refetchInterval: 3 * 60 * 1000, // 3 minutes - MUCH BETTER than 30 seconds!
-    refetchIntervalInBackground: false, // Save battery/bandwidth
+    refetchIntervalInBackground: false,
   });
 }
 
-// Custom hook for today's appointments
-export function useTodaysAppointments() {
-  const today = format(new Date(), 'yyyy-MM-dd');
-  return useAppointments(today);
-}
-
-// Custom hook for waiting list
-export function useWaitingList() {
-  const { appointments, loading, error, updateAppointmentStatus, refetch } = useTodaysAppointments();
-  
-  const waitingAppointments = appointments.filter(apt => 
-    apt.status === 'waiting' || apt.status === 'in-progress'
-  ).sort((a, b) => {
-    // Sort by check-in time or appointment time
-    const timeA = new Date(`${a.appointmentDate} ${a.appointmentTime}`).getTime();
-    const timeB = new Date(`${b.appointmentDate} ${b.appointmentTime}`).getTime();
-    return timeA - timeB;
-  });
-
-  return {
-    waitingAppointments,
-    loading,
-    error,
-    updateAppointmentStatus,
-    refetch
-  };
-}
-
-// Custom hook for appointment trends and analytics - OPTIMIZED WITH REACT QUERY
+// 📈 Analytics with longer cache time
 export function useAppointmentAnalytics() {
   return useQuery({
     queryKey: queryKeys.appointmentAnalytics,
@@ -331,7 +260,7 @@ export function useAppointmentAnalytics() {
         const dateString = format(date, 'yyyy-MM-dd');
         const dayName = format(date, 'EEE');
         
-        const dayAppointments = appointments.filter((apt: Appointment) => apt.appointmentDate === dateString);
+        const dayAppointments = appointments.filter(apt => apt.appointmentDate === dateString);
         trends.push({
           name: dayName,
           appointments: dayAppointments.length
@@ -342,12 +271,12 @@ export function useAppointmentAnalytics() {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
-      const recentAppointments = appointments.filter((apt: Appointment) => {
+      const recentAppointments = appointments.filter(apt => {
         const aptDate = new Date(apt.appointmentDate);
         return aptDate >= thirtyDaysAgo;
       });
 
-      recentAppointments.forEach((apt: Appointment) => {
+      recentAppointments.forEach(apt => {
         if (apt.status in statusCounts) {
           statusCounts[apt.status as keyof typeof statusCounts]++;
         }
@@ -358,7 +287,7 @@ export function useAppointmentAnalytics() {
         { name: 'Confirmed', value: statusCounts.confirmed, fill: '#3b82f6' },
         { name: 'Waiting', value: statusCounts.waiting, fill: '#f59e0b' },
         { name: 'Cancelled', value: statusCounts.cancelled + statusCounts['no-show'], fill: '#ef4444' }
-      ].filter(item => item.value > 0); // Only show statuses with data
+      ].filter(item => item.value > 0);
 
       return {
         appointmentTrends: trends,
@@ -366,7 +295,33 @@ export function useAppointmentAnalytics() {
       };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes - Analytics change less frequently
-    refetchInterval: 10 * 60 * 1000, // 10 minutes - MUCH BETTER than 30 seconds!
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
     refetchIntervalInBackground: false,
   });
+}
+
+// Today's appointments
+export function useTodaysAppointments() {
+  const today = format(new Date(), 'yyyy-MM-dd');
+  return useAppointments(today);
+}
+
+// Waiting list
+export function useWaitingList() {
+  const { appointments, loading, error, updateAppointmentStatus } = useTodaysAppointments();
+  
+  const waitingAppointments = appointments.filter(apt => 
+    apt.status === 'waiting' || apt.status === 'in-progress'
+  ).sort((a, b) => {
+    const timeA = new Date(`${a.appointmentDate} ${a.appointmentTime}`).getTime();
+    const timeB = new Date(`${b.appointmentDate} ${b.appointmentTime}`).getTime();
+    return timeA - timeB;
+  });
+
+  return {
+    waitingAppointments,
+    loading,
+    error,
+    updateAppointmentStatus,
+  };
 }

@@ -32,92 +32,32 @@ import {
   Paperclip
 } from 'lucide-react';
 import { format } from 'date-fns';
-
-// Mock data for conversations
-const mockConversations = [
-  {
-    id: '1',
-    patientName: 'John Doe',
-    patientId: 'patient-1',
-    lastMessage: 'Thank you for the reminder about my appointment tomorrow.',
-    timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
-    unread: false,
-    type: 'patient' as const,
-    phone: '+61234567890',
-    email: 'john.doe@example.com'
-  },
-  {
-    id: '2',
-    patientName: 'Sarah Johnson',
-    patientId: 'patient-2',
-    lastMessage: 'I need to reschedule my appointment for next week.',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-    unread: true,
-    type: 'patient' as const,
-    phone: '+61234567892',
-    email: 'sarah.johnson@example.com'
-  },
-  {
-    id: '3',
-    patientName: 'System',
-    patientId: 'system',
-    lastMessage: 'Appointment reminder sent to 15 patients for tomorrow.',
-    timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
-    unread: false,
-    type: 'system' as const
-  }
-];
-
-const mockMessages = [
-  {
-    id: '1',
-    conversationId: '1',
-    sender: 'staff',
-    content: 'Hi John, this is a reminder about your appointment tomorrow at 9:00 AM with Dr. Sarah Chen.',
-    timestamp: new Date(Date.now() - 60 * 60 * 1000),
-    status: 'delivered'
-  },
-  {
-    id: '2',
-    conversationId: '1',
-    sender: 'patient',
-    content: 'Thank you for the reminder about my appointment tomorrow.',
-    timestamp: new Date(Date.now() - 30 * 60 * 1000),
-    status: 'read'
-  }
-];
-
-const messageTemplates = [
-  {
-    id: '1',
-    name: 'Appointment Reminder',
-    content: 'Hi {patientName}, this is a reminder about your appointment on {date} at {time} with {doctor}. Please arrive 15 minutes early.'
-  },
-  {
-    id: '2',
-    name: 'Appointment Confirmation',
-    content: 'Your appointment has been confirmed for {date} at {time} with {doctor}. If you need to reschedule, please call us at least 24 hours in advance.'
-  },
-  {
-    id: '3',
-    name: 'Delay Notification',
-    content: 'We apologize for the delay. Your appointment with {doctor} is running approximately {delay} minutes behind schedule. Thank you for your patience.'
-  },
-  {
-    id: '4',
-    name: 'Follow-up Required',
-    content: 'Please bring your Medicare card and any recent test results to your appointment. If you have any questions, please don\'t hesitate to contact us.'
-  }
-];
+import { useConversations, useMessageTemplates } from '@/hooks/useMessages';
 
 export default function MessagesPage() {
-  const [selectedConversation, setSelectedConversation] = useState(mockConversations[0]);
+  const { 
+    conversations, 
+    loading: conversationsLoading, 
+    error: conversationsError,
+    getConversationMessages,
+    sendMessage,
+    markAsRead
+  } = useConversations();
+  
+  const { templates, loading: templatesLoading } = useMessageTemplates();
+  
+  const [selectedConversation, setSelectedConversation] = useState<any>(null);
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [messageFilter, setMessageFilter] = useState('all');
   const [showTemplates, setShowTemplates] = useState(false);
 
-  const filteredConversations = mockConversations.filter(conversation => {
+  // Set initial selected conversation when data loads
+  if (!selectedConversation && conversations.length > 0) {
+    setSelectedConversation(conversations[0]);
+  }
+
+  const filteredConversations = conversations.filter(conversation => {
     const matchesSearch = conversation.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          conversation.lastMessage.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -129,14 +69,26 @@ export default function MessagesPage() {
     return matchesSearch && matchesFilter;
   });
 
-  const conversationMessages = mockMessages.filter(msg => msg.conversationId === selectedConversation.id);
+  const conversationMessages = selectedConversation 
+    ? getConversationMessages(selectedConversation.id)
+    : [];
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedConversation) return;
     
-    console.log('Sending message:', newMessage);
-    // Implement message sending logic
-    setNewMessage('');
+    try {
+      await sendMessage(selectedConversation.id, newMessage);
+      setNewMessage('');
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    }
+  };
+
+  const handleSelectConversation = (conversation: any) => {
+    setSelectedConversation(conversation);
+    if (conversation.unread) {
+      markAsRead(conversation.id);
+    }
   };
 
   const handleUseTemplate = (template: any) => {
@@ -144,7 +96,29 @@ export default function MessagesPage() {
     setShowTemplates(false);
   };
 
-  const unreadCount = mockConversations.filter(c => c.unread).length;
+  const unreadCount = conversations.filter(c => c.unread).length;
+
+  if (conversationsLoading) {
+    return (
+      <div className="min-h-screen flex bg-gray-50">
+        <Sidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-gray-500">Loading messages...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (conversationsError) {
+    return (
+      <div className="min-h-screen flex bg-gray-50">
+        <Sidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-red-500">Error loading messages: {conversationsError}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex bg-gray-50">
@@ -220,9 +194,9 @@ export default function MessagesPage() {
                 filteredConversations.map((conversation) => (
                   <div
                     key={conversation.id}
-                    onClick={() => setSelectedConversation(conversation)}
+                    onClick={() => handleSelectConversation(conversation)}
                     className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
-                      selectedConversation.id === conversation.id ? 'bg-blue-50 border-blue-200' : ''
+                      selectedConversation?.id === conversation.id ? 'bg-blue-50 border-blue-200' : ''
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -277,27 +251,29 @@ export default function MessagesPage() {
 
           {/* Message Thread */}
           <div className="flex-1 flex flex-col">
-            {/* Conversation Header */}
-            <div className="bg-white border-b border-gray-200 p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarFallback>
-                      {selectedConversation.type === 'system' ? 'SYS' : 
-                       selectedConversation.patientName.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
+            {selectedConversation ? (
+              <>
+                {/* Conversation Header */}
+                <div className="bg-white border-b border-gray-200 p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarFallback>
+                          {selectedConversation.type === 'system' ? 'SYS' : 
+                           selectedConversation.patientName.split(' ').map((n: string) => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
                   <div>
                     <h2 className="font-semibold text-gray-900">{selectedConversation.patientName}</h2>
                     {selectedConversation.type === 'patient' && (
                       <div className="flex items-center gap-4 text-sm text-gray-600">
                         <span className="flex items-center gap-1">
                           <Phone className="h-3 w-3" />
-                          {selectedConversation.phone}
+                          {selectedConversation.patientPhone}
                         </span>
                         <span className="flex items-center gap-1">
                           <Mail className="h-3 w-3" />
-                          {selectedConversation.email}
+                          {selectedConversation.patientEmail}
                         </span>
                       </div>
                     )}
@@ -333,19 +309,19 @@ export default function MessagesPage() {
                 conversationMessages.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex ${message.sender === 'staff' ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${message.senderType === 'staff' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                      message.sender === 'staff'
+                      message.senderType === 'staff'
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-200 text-gray-900'
                     }`}>
                       <p className="text-sm">{message.content}</p>
                       <div className={`flex items-center justify-between mt-2 text-xs ${
-                        message.sender === 'staff' ? 'text-blue-100' : 'text-gray-500'
+                        message.senderType === 'staff' ? 'text-blue-100' : 'text-gray-500'
                       }`}>
-                        <span>{format(message.timestamp, 'h:mm a')}</span>
-                        {message.sender === 'staff' && (
+                        <span>{format(new Date(message.timestamp), 'h:mm a')}</span>
+                        {message.senderType === 'staff' && (
                           <div className="flex items-center gap-1">
                             {message.status === 'delivered' && <CheckCircle className="h-3 w-3" />}
                             {message.status === 'read' && <CheckCircle className="h-3 w-3 text-green-300" />}
@@ -368,7 +344,7 @@ export default function MessagesPage() {
                     </CardHeader>
                     <CardContent className="pt-0">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {messageTemplates.map((template) => (
+                        {templates.map((template) => (
                           <Button
                             key={template.id}
                             variant="outline"
@@ -420,6 +396,16 @@ export default function MessagesPage() {
                       <Send className="h-4 w-4" />
                     </Button>
                   </div>
+                </div>
+              </div>
+            )}
+              </>
+            ) : (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center text-gray-500">
+                  <MessageSquare className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Conversation Selected</h3>
+                  <p>Select a conversation from the sidebar to start messaging</p>
                 </div>
               </div>
             )}

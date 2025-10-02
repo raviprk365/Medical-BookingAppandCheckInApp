@@ -61,19 +61,20 @@ export default function WaitingPage() {
   // Calculate waiting duration for each patient
   const waitingPatients: WaitingPatient[] = waitingAppointments.map(appointment => {
     const appointmentDateTime = new Date(`${appointment.appointmentDate} ${appointment.appointmentTime}`);
-    const checkInTime = appointment.checkInTime ? new Date(appointment.checkInTime) : appointmentDateTime;
+    // Use appointment time as check-in time since checkInTime property doesn't exist
+    const checkInTime = new Date(appointment.createdAt);
     const waitingDuration = differenceInMinutes(currentTime, checkInTime);
 
     return {
       id: appointment.id,
       patientName: appointment.patientName,
       appointmentTime: appointment.appointmentTime,
-      checkInTime: appointment.checkInTime,
+      checkInTime: appointment.createdAt, // Using createdAt as a proxy for check-in time
       waitingDuration: Math.max(0, waitingDuration),
       doctor: appointment.practitionerName,
       appointmentType: appointment.appointmentType,
-      status: appointment.status,
-      urgency: appointment.urgency as 'routine' | 'urgent' | 'emergency',
+      status: appointment.status as 'waiting' | 'in-progress',
+      urgency: (appointment.urgency as 'routine' | 'urgent' | 'emergency') || 'routine',
       phone: appointment.patientPhone,
       notes: appointment.notes
     };

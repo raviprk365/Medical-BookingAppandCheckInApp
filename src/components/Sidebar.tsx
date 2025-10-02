@@ -13,13 +13,16 @@ import {
   Users,
   LogOut,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signOut } from 'next-auth/react';
 import { useAuth } from '@/hooks/useAuth';
+import { useDashboardMetrics } from '@/hooks/useAppointments';
+import { useNotifications } from '@/hooks/useNotifications';
 
 interface SidebarProps {
   className?: string;
@@ -30,42 +33,39 @@ const menuItems = [
     href: '/staff/dashboard',
     icon: LayoutDashboard,
     label: 'Dashboard',
-    badge: null,
     description: 'Overview & quick access'
   },
   {
     href: '/staff/dashboard/today',
     icon: CalendarDays,
     label: 'Today\'s Appointments',
-    badge: '12',
-    description: 'View today\'s schedule'
+    description: 'View today\'s schedule',
+    badgeKey: 'todaysAppointments'
   },
   {
     href: '/staff/dashboard/calendar',
     icon: Calendar,
     label: 'Calendar',
-    badge: null,
     description: 'Schedule management'
   },
   {
     href: '/staff/dashboard/waiting',
     icon: Clock,
     label: 'Waiting',
-    badge: '3',
-    description: 'Queue management'
+    description: 'Queue management',
+    badgeKey: 'waitingPatients'
   },
   {
     href: '/staff/dashboard/messages',
     icon: MessageSquare,
     label: 'Messages',
-    badge: '5',
-    description: 'Patient communications'
+    description: 'Patient communications',
+    badgeKey: 'unreadCount'
   },
   {
     href: '/staff/dashboard/settings',
     icon: Settings,
     label: 'Settings',
-    badge: null,
     description: 'Availability & preferences'
   }
 ];
@@ -75,9 +75,43 @@ export function Sidebar({ className }: SidebarProps) {
   const router = useRouter();
   const { user } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
+
+  // Get real-time data for badges
+  const { data: metrics } = useDashboardMetrics();
+  const { unreadCount } = useNotifications();
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: '/auth/signin' });
+  };
+
+  const handleNavigation = (href: string) => {
+    setNavigatingTo(href);
+    // Reset after navigation completes or timeout
+    setTimeout(() => setNavigatingTo(null), 2000);
+  };
+
+  // Reset navigation state when pathname changes (successful navigation)
+  useEffect(() => {
+    if (navigatingTo && pathname !== navigatingTo) {
+      setNavigatingTo(null);
+    }
+  }, [pathname, navigatingTo]);
+
+  // Helper function to get badge value for menu items
+  const getBadgeValue = (badgeKey?: string) => {
+    if (!badgeKey) return null;
+    
+    switch (badgeKey) {
+      case 'todaysAppointments':
+        return metrics?.todaysAppointments;
+      case 'waitingPatients':
+        return metrics?.waitingPatients;
+      case 'unreadCount':
+        return unreadCount;
+      default:
+        return null;
+    }
   };
 
   return (
@@ -131,30 +165,38 @@ export function Sidebar({ className }: SidebarProps) {
         <ul className="space-y-1">
           {menuItems.map((item) => {
             const isActive = pathname === item.href;
+            const isNavigating = navigatingTo === item.href;
             const Icon = item.icon;
             
             return (
               <li key={item.href}>
-                <Link href={item.href}>
+                <Link href={item.href} onClick={() => handleNavigation(item.href)}>
                   <Button
                     variant={isActive ? 'secondary' : 'ghost'}
                     className={cn(
-                      'w-full justify-start gap-3 h-auto py-3 px-3',
+                      'w-full justify-start gap-3 h-auto py-3 px-3 transition-all duration-200',
                       isActive && 'bg-blue-50 text-blue-700 border-blue-200',
+                      isNavigating && 'opacity-60',
+                      !isActive && 'hover:bg-gray-100',
                       isCollapsed && 'px-3'
                     )}
+                    disabled={isNavigating}
                   >
-                    <Icon className={cn(
-                      'h-5 w-5 flex-shrink-0',
-                      isActive ? 'text-blue-600' : 'text-gray-500'
-                    )} />
+                    {isNavigating ? (
+                      <Loader2 className="h-5 w-5 flex-shrink-0 animate-spin text-blue-600" />
+                    ) : (
+                      <Icon className={cn(
+                        'h-5 w-5 flex-shrink-0',
+                        isActive ? 'text-blue-600' : 'text-gray-500'
+                      )} />
+                    )}
                     {!isCollapsed && (
                       <div className="flex-1 text-left">
                         <div className="flex items-center justify-between">
                           <span className="font-medium text-sm">{item.label}</span>
-                          {item.badge && (
+                          {getBadgeValue(item.badgeKey) && (
                             <Badge variant="secondary" className="ml-2 bg-red-100 text-red-800 text-xs">
-                              {item.badge}
+                              {getBadgeValue(item.badgeKey)}
                             </Badge>
                           )}
                         </div>

@@ -78,7 +78,7 @@
       "appointmentType": "general-consultation",
       "reason": "Annual check-up",
       "urgency": "routine",
-      "status": "confirmed",
+      "status": "completed",
       "notes": "Patient requests blood pressure check",
       "medications": "Lisinopril 10mg daily",
       "allergies": "Penicillin",
@@ -87,7 +87,7 @@
       "relationship": "",
       "confirmationCode": "APT001",
       "createdAt": "2025-10-01T10:00:00Z",
-      "updatedAt": "2025-10-01T10:00:00Z"
+      "updatedAt": "2025-10-02T05:32:43.421Z"
     },
     {
       "id": "apt-2",
@@ -121,7 +121,7 @@
       "appointmentType": "general-consultation",
       "reason": "reason",
       "urgency": "routine",
-      "status": "confirmed",
+      "status": "completed",
       "notes": "",
       "medications": "",
       "allergies": "",
@@ -131,7 +131,7 @@
       "id": "apt-1759307528370-am4poox284",
       "confirmationCode": "APTMJQYMS",
       "createdAt": "2025-10-01T08:32:08.370Z",
-      "updatedAt": "2025-10-01T08:32:08.370Z"
+      "updatedAt": "2025-10-01T17:28:59.938Z"
     },
     {
       "patientId": "patient-1",
@@ -143,7 +143,7 @@
       "appointmentType": "general-consultation",
       "reason": "reason",
       "urgency": "routine",
-      "status": "confirmed",
+      "status": "completed",
       "notes": "",
       "medications": "",
       "allergies": "",
@@ -723,6 +723,218 @@
           }
         ]
       }
+    }
+  ],
+  "messages": [
+    {
+      "id": "msg-1",
+      "conversationId": "conv-1",
+      "senderId": "staff-1",
+      "senderType": "staff",
+      "content": "Hi John, this is a reminder about your appointment tomorrow at 9:00 AM with Dr. Sarah Chen.",
+      "timestamp": "2025-10-01T14:00:00Z",
+      "status": "delivered",
+      "messageType": "reminder"
+    },
+    {
+      "id": "msg-2",
+      "conversationId": "conv-1",
+      "senderId": "patient-1",
+      "senderType": "patient",
+      "content": "Thank you for the reminder about my appointment tomorrow.",
+      "timestamp": "2025-10-01T14:30:00Z",
+      "status": "read",
+      "messageType": "reply"
+    },
+    {
+      "id": "msg-3",
+      "conversationId": "conv-2",
+      "senderId": "patient-2",
+      "senderType": "patient",
+      "content": "I need to reschedule my appointment for next week.",
+      "timestamp": "2025-10-01T12:00:00Z",
+      "status": "read",
+      "messageType": "request"
+    },
+    {
+      "id": "msg-4",
+      "conversationId": "conv-2",
+      "senderId": "staff-1",
+      "senderType": "staff",
+      "content": "Of course! What day and time would work better for you?",
+      "timestamp": "2025-10-01T12:15:00Z",
+      "status": "delivered",
+      "messageType": "reply"
+    },
+    {
+      "id": "msg-5",
+      "conversationId": "conv-3",
+      "senderId": "system",
+      "senderType": "system",
+      "content": "Appointment reminder sent to 15 patients for tomorrow.",
+      "timestamp": "2025-10-01T10:00:00Z",
+      "status": "delivered",
+      "messageType": "notification"
+    },
+    {
+      "id": "2bd0",
+      "conversationId": "conv-1",
+      "senderId": "staff-1",
+      "senderType": "staff",
+      "content": "hi",
+      "timestamp": "2025-10-01T17:42:56.515Z",
+      "status": "sent",
+      "messageType": "reply"
+    }
+  ],
+  "conversations": [
+    {
+      "id": "conv-1",
+      "patientId": "patient-1",
+      "staffId": "staff-1",
+      "type": "patient",
+      "lastMessageId": "2bd0",
+      "lastActivity": "2025-10-01T17:42:56.563Z",
+      "unread": false,
+      "subject": "Appointment Reminder",
+      "status": "active"
+    },
+    {
+      "id": "conv-2",
+      "patientId": "patient-2",
+      "staffId": "staff-1",
+      "type": "patient",
+      "lastMessageId": "msg-4",
+      "lastActivity": "2025-10-01T12:15:00Z",
+      "unread": true,
+      "subject": "Appointment Reschedule",
+      "status": "active"
+    },
+    {
+      "id": "conv-3",
+      "patientId": null,
+      "staffId": "system",
+      "type": "system",
+      "lastMessageId": "msg-5",
+      "lastActivity": "2025-10-01T10:00:00Z",
+      "unread": false,
+      "subject": "System Notification",
+      "status": "active"
+    }
+  ],
+  "messageTemplates": [
+    {
+      "id": "template-1",
+      "name": "Appointment Reminder",
+      "content": "Hi {patientName}, this is a reminder about your appointment on {date} at {time} with {doctor}. Please arrive 15 minutes early.",
+      "category": "reminder",
+      "variables": [
+        "patientName",
+        "date",
+        "time",
+        "doctor"
+      ],
+      "isActive": true,
+      "createdAt": "2025-01-15T10:00:00Z"
+    },
+    {
+      "id": "template-2",
+      "name": "Appointment Confirmation",
+      "content": "Your appointment has been confirmed for {date} at {time} with {doctor}. If you need to reschedule, please call us at least 24 hours in advance.",
+      "category": "confirmation",
+      "variables": [
+        "date",
+        "time",
+        "doctor"
+      ],
+      "isActive": true,
+      "createdAt": "2025-01-15T10:00:00Z"
+    },
+    {
+      "id": "template-3",
+      "name": "Delay Notification",
+      "content": "We apologize for the delay. Your appointment with {doctor} is running approximately {delay} minutes behind schedule. Thank you for your patience.",
+      "category": "notification",
+      "variables": [
+        "doctor",
+        "delay"
+      ],
+      "isActive": true,
+      "createdAt": "2025-01-15T10:00:00Z"
+    },
+    {
+      "id": "template-4",
+      "name": "Follow-up Required",
+      "content": "Please bring your Medicare card and any recent test results to your appointment. If you have any questions, please don't hesitate to contact us.",
+      "category": "instruction",
+      "variables": [],
+      "isActive": true,
+      "createdAt": "2025-01-15T10:00:00Z"
+    }
+  ],
+  "staff": [
+    {
+      "id": "staff-1",
+      "firstName": "Admin",
+      "lastName": "User",
+      "email": "admin@medicalbooking.com",
+      "role": "administrator",
+      "clinicId": "clinic-1",
+      "permissions": [
+        "view_patients",
+        "manage_appointments",
+        "send_messages",
+        "view_reports"
+      ],
+      "createdAt": "2025-01-01T00:00:00Z"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "notif-1",
+      "type": "warning",
+      "category": "appointment",
+      "title": "Patient running late",
+      "message": "John Doe - 10:30 AM appointment",
+      "patientId": "patient-1",
+      "appointmentId": "apt-1",
+      "isRead": false,
+      "priority": "medium",
+      "createdAt": "2025-10-01T10:15:00Z"
+    },
+    {
+      "id": "notif-2",
+      "type": "info",
+      "category": "lab_results",
+      "title": "Lab results received",
+      "message": "3 new results to review",
+      "patientId": "patient-2",
+      "isRead": false,
+      "priority": "low",
+      "createdAt": "2025-10-01T09:30:00Z"
+    },
+    {
+      "id": "notif-3",
+      "type": "success",
+      "category": "check_in",
+      "title": "Patient checked in",
+      "message": "Sarah Johnson - 2:00 PM",
+      "patientId": "patient-2",
+      "appointmentId": "apt-2",
+      "isRead": false,
+      "priority": "low",
+      "createdAt": "2025-10-01T14:00:00Z"
+    },
+    {
+      "id": "notif-4",
+      "type": "success",
+      "category": "appointment",
+      "title": "Appointment confirmed",
+      "message": "New appointment booked for tomorrow",
+      "patientId": "patient-1",
+      "isRead": true,
+      "priority": "low",
+      "createdAt": "2025-10-01T08:00:00Z"
     }
   ]
 }

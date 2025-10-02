@@ -37,19 +37,20 @@ export default function SignInPage() {
       if (result?.error) {
         console.log('❌ SignIn: Sign in failed:', result.error);
         setError('Invalid email or password. Please try again.');
+        setIsLoading(false);
       } else if (result?.ok) {
-        console.log('✅ SignIn: Sign in successful, redirecting manually');
-        // Manual redirect to see if this works better
+        console.log('✅ SignIn: Sign in successful, redirecting...');
+        // Keep loading state until redirect completes
         window.location.href = '/staff/dashboard';
         return;
       }
     } catch (error) {
       console.error('💥 SignIn: Unexpected error:', error);
       setError('An unexpected error occurred. Please try again.');
-    } finally {
       setIsLoading(false);
     }
   };
+  
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -148,6 +149,18 @@ export default function SignInPage() {
       </main>
       
       <Footer />
+      
+      {/* Loading Overlay during Authentication */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <div className="text-center">
+              <p className="text-sm text-gray-600">Please wait while we authenticate your credentials</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -36,11 +36,47 @@ import {
   Bell,
   Shield,
   Palette,
-  Globe
+  Globe,
+  Loader2
 } from 'lucide-react';
 
+// Type definitions
+type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+
+interface Session {
+  start: string;
+  end: string;
+}
+
+interface DayAvailability {
+  enabled: boolean;
+  sessions: Session[];
+}
+
+type AvailabilityData = Record<DayOfWeek, DayAvailability>;
+
+interface Break {
+  id: string;
+  name: string;
+  start: string;
+  end: string;
+  days: DayOfWeek[];
+  date?: string; // Optional: for date-specific breaks
+}
+
+interface Exception {
+  id: string;
+  date: string;
+  type: 'unavailable' | 'special_hours' | 'meeting' | 'break';
+  name?: string;
+  reason?: string;
+  sessions?: Session[];
+  startTime?: string;
+  endTime?: string;
+}
+
 // Sample availability data
-const defaultAvailability = {
+const defaultAvailability: AvailabilityData = {
   monday: { enabled: true, sessions: [{ start: '09:00', end: '17:00' }] },
   tuesday: { enabled: true, sessions: [{ start: '09:00', end: '17:00' }] },
   wednesday: { enabled: true, sessions: [{ start: '09:00', end: '17:00' }] },
@@ -50,7 +86,7 @@ const defaultAvailability = {
   sunday: { enabled: false, sessions: [] }
 };
 
-const defaultBreaks = [
+const defaultBreaks: Break[] = [
   { id: '1', name: 'Lunch Break', start: '12:00', end: '13:00', days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] },
   { id: '2', name: 'Coffee Break', start: '15:00', end: '15:15', days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] }
 ];
@@ -63,14 +99,26 @@ const timeOptions = Array.from({ length: 48 }, (_, i) => {
 });
 
 export default function SettingsPage() {
-  const [availability, setAvailability] = useState(defaultAvailability);
-  const [breaks, setBreaks] = useState(defaultBreaks);
-  const [exceptions, setExceptions] = useState([]);
+  const [availability, setAvailability] = useState<AvailabilityData>(defaultAvailability);
+  const [breaks, setBreaks] = useState<Break[]>(defaultBreaks);
+  const [exceptions, setExceptions] = useState<Exception[]>([]);
   const [showBreakDialog, setShowBreakDialog] = useState(false);
   const [showExceptionDialog, setShowExceptionDialog] = useState(false);
-  const [newBreak, setNewBreak] = useState({ name: '', start: '', end: '', days: [] });
+  const [newBreak, setNewBreak] = useState<Omit<Break, 'id'>>({ name: '', start: '', end: '', days: [] });
+  const [newException, setNewException] = useState<Omit<Exception, 'id'>>({ 
+    date: '', 
+    type: 'meeting', 
+    name: '', 
+    reason: '', 
+    startTime: '', 
+    endTime: '' 
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
-  const dayNames = {
+  const dayNames: Record<DayOfWeek, string> = {
     monday: 'Monday',
     tuesday: 'Tuesday',
     wednesday: 'Wednesday',
@@ -80,7 +128,7 @@ export default function SettingsPage() {
     sunday: 'Sunday'
   };
 
-  const handleDayToggle = (day: string, enabled: boolean) => {
+  const handleDayToggle = (day: DayOfWeek, enabled: boolean) => {
     setAvailability(prev => ({
       ...prev,
       [day]: {
@@ -91,7 +139,7 @@ export default function SettingsPage() {
     }));
   };
 
-  const handleSessionUpdate = (day: string, sessionIndex: number, field: 'start' | 'end', value: string) => {
+  const handleSessionUpdate = (day: DayOfWeek, sessionIndex: number, field: 'start' | 'end', value: string) => {
     setAvailability(prev => ({
       ...prev,
       [day]: {
@@ -103,7 +151,7 @@ export default function SettingsPage() {
     }));
   };
 
-  const addSession = (day: string) => {
+  const addSession = (day: DayOfWeek) => {
     setAvailability(prev => ({
       ...prev,
       [day]: {
@@ -113,7 +161,7 @@ export default function SettingsPage() {
     }));
   };
 
-  const removeSession = (day: string, sessionIndex: number) => {
+  const removeSession = (day: DayOfWeek, sessionIndex: number) => {
     setAvailability(prev => ({
       ...prev,
       [day]: {
@@ -140,9 +188,57 @@ export default function SettingsPage() {
     setBreaks(prev => prev.filter(b => b.id !== breakId));
   };
 
-  const saveSettings = () => {
-    console.log('Saving availability settings:', { availability, breaks, exceptions });
-    // Implement save functionality
+  // Exception handlers
+  const addException = () => {
+    if (newException.date && newException.name) {
+      const exception: Exception = {
+        ...newException,
+        id: Date.now().toString()
+      };
+      setExceptions(prev => [...prev, exception]);
+      setNewException({ 
+        date: '', 
+        type: 'meeting', 
+        name: '', 
+        reason: '', 
+        startTime: '', 
+        endTime: '' 
+      });
+      setShowExceptionDialog(false);
+      showToastMessage(`${newException.type === 'meeting' ? 'Meeting' : 'Exception'} added successfully!`);
+    }
+  };
+
+  const removeException = (exceptionId: string) => {
+    setExceptions(prev => prev.filter(e => e.id !== exceptionId));
+    showToastMessage('Exception removed successfully!');
+  };
+
+  // Save functionality with loading and toast
+  const showToastMessage = (message: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+    // Auto-hide toast after 3 seconds
+    setTimeout(() => setShowToast(false), 3000);
+  };
+
+  const saveSettings = async () => {
+    setIsSaving(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Here you would typically save to your backend:
+      // await saveSettingsToAPI({ availability, breaks, exceptions });
+      
+      console.log('Saving availability settings:', { availability, breaks, exceptions });
+      showToastMessage('Settings saved successfully!', 'success');
+    } catch (error) {
+      showToastMessage('Failed to save settings. Please try again.', 'error');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -167,9 +263,18 @@ export default function SettingsPage() {
                 <Copy className="h-4 w-4 mr-2" />
                 Copy Week
               </Button>
-              <Button onClick={saveSettings}>
-                <Save className="h-4 w-4 mr-2" />
-                Save Changes
+              <Button onClick={saveSettings} disabled={isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Changes
+                  </>
+                )}
               </Button>
             </div>
           </div>
@@ -206,7 +311,7 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {Object.entries(dayNames).map(([day, dayName]) => (
+                  {(Object.entries(dayNames) as [DayOfWeek, string][]).map(([day, dayName]) => (
                     <div key={day} className="border rounded-lg p-4">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
@@ -347,7 +452,7 @@ export default function SettingsPage() {
                         <div>
                           <Label>Days</Label>
                           <div className="grid grid-cols-2 gap-2 mt-2">
-                            {Object.entries(dayNames).map(([day, dayName]) => (
+                            {(Object.entries(dayNames) as [DayOfWeek, string][]).map(([day, dayName]) => (
                               <div key={day} className="flex items-center space-x-2">
                                 <input
                                   type="checkbox"
@@ -420,20 +525,172 @@ export default function SettingsPage() {
                   <div>
                     <CardTitle>Exceptions</CardTitle>
                     <CardDescription>
-                      Override your regular schedule for specific dates
+                      Override your regular schedule for specific dates. Use exceptions to block out time for holidays, conferences, vacation days, or set special working hours.
                     </CardDescription>
                   </div>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Exception
-                  </Button>
+                  <Dialog open={showExceptionDialog} onOpenChange={setShowExceptionDialog}>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Exception
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add Schedule Exception / Meeting</DialogTitle>
+                        <DialogDescription>
+                          Block time for meetings, conferences, breaks, or mark the day as unavailable. Perfect for scheduling around medical conferences, team meetings, or personal time off.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label>Date</Label>
+                          <Input 
+                            type="date" 
+                            className="mt-1"
+                            value={newException.date}
+                            onChange={(e) => setNewException(prev => ({ ...prev, date: e.target.value }))}
+                            min={new Date().toISOString().split('T')[0]}
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label>Type</Label>
+                          <Select value={newException.type} onValueChange={(value) => setNewException(prev => ({ ...prev, type: value as any }))}>
+                            <SelectTrigger className="mt-1">
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="meeting">🤝 Meeting / Conference</SelectItem>
+                              <SelectItem value="break">☕ Extended Break</SelectItem>
+                              <SelectItem value="unavailable">❌ Day Off / Unavailable</SelectItem>
+                              <SelectItem value="special_hours">🕒 Custom Working Hours</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label>Name/Title</Label>
+                          <Input 
+                            placeholder="e.g., Medical Conference, Team Meeting, Dentist Appointment"
+                            className="mt-1"
+                            value={newException.name}
+                            onChange={(e) => setNewException(prev => ({ ...prev, name: e.target.value }))}
+                          />
+                        </div>
+
+                        {(newException.type === 'meeting' || newException.type === 'break') && (
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label>Start Time</Label>
+                              <Select value={newException.startTime} onValueChange={(value) => setNewException(prev => ({ ...prev, startTime: value }))}>
+                                <SelectTrigger className="mt-1">
+                                  <SelectValue placeholder="Start" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {timeOptions.map(time => (
+                                    <SelectItem key={time} value={time}>{time}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label>End Time</Label>
+                              <Select value={newException.endTime} onValueChange={(value) => setNewException(prev => ({ ...prev, endTime: value }))}>
+                                <SelectTrigger className="mt-1">
+                                  <SelectValue placeholder="End" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {timeOptions.map(time => (
+                                    <SelectItem key={time} value={time}>{time}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        )}
+
+                        <div>
+                          <Label>Additional Notes (Optional)</Label>
+                          <Input 
+                            placeholder="Location, contact info, special instructions..."
+                            className="mt-1"
+                            value={newException.reason}
+                            onChange={(e) => setNewException(prev => ({ ...prev, reason: e.target.value }))}
+                          />
+                        </div>
+
+                        <div className="bg-blue-50 p-3 rounded-lg">
+                          <h4 className="text-sm font-medium text-blue-900 mb-1">Quick Examples:</h4>
+                          <ul className="text-xs text-blue-800 space-y-1">
+                            <li>• <strong>Meeting:</strong> "Medical Conference" 9:00 AM - 5:00 PM</li>
+                            <li>• <strong>Break:</strong> "Extended Lunch - Dentist" 12:00 PM - 2:00 PM</li>
+                            <li>• <strong>Day Off:</strong> "Vacation Day" (entire day blocked)</li>
+                            <li>• <strong>Custom Hours:</strong> "Half Day" 9:00 AM - 1:00 PM only</li>
+                          </ul>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <Button onClick={addException} className="flex-1" disabled={!newException.date || !newException.name}>
+                            Add {newException.type === 'meeting' ? 'Meeting' : newException.type === 'break' ? 'Break' : 'Exception'}
+                          </Button>
+                          <Button variant="outline" onClick={() => setShowExceptionDialog(false)}>Cancel</Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center py-8 text-gray-500">
-                    <Calendar className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                    <p>No exceptions set</p>
-                    <p className="text-sm">Add exceptions for holidays, conferences, or custom schedules</p>
-                  </div>
+                  {exceptions.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <Calendar className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                      <p>No exceptions set</p>
+                      <p className="text-sm">Add exceptions for holidays, conferences, vacation days, meetings, or custom schedules</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {exceptions.map((exception) => (
+                        <div key={exception.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-sm">
+                                {exception.type === 'meeting' && '🤝'}
+                                {exception.type === 'break' && '☕'}
+                                {exception.type === 'unavailable' && '❌'}
+                                {exception.type === 'special_hours' && '🕒'}
+                              </span>
+                              <h4 className="font-medium text-gray-900">{exception.name}</h4>
+                              <Badge variant="secondary" className="text-xs capitalize">
+                                {exception.type.replace('_', ' ')}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-gray-600">
+                              📅 {new Date(exception.date).toLocaleDateString('en-US', { 
+                                weekday: 'long', 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                              })}
+                              {exception.startTime && exception.endTime && (
+                                <span> • ⏰ {exception.startTime} - {exception.endTime}</span>
+                              )}
+                            </p>
+                            {exception.reason && (
+                              <p className="text-xs text-gray-500 mt-1">📝 {exception.reason}</p>
+                            )}
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeException(exception.id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -537,6 +794,42 @@ export default function SettingsPage() {
           </Tabs>
         </div>
       </div>
+
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right-full duration-300">
+          <div className={`rounded-lg p-4 shadow-lg border ${
+            toastType === 'success' 
+              ? 'bg-green-50 border-green-200 text-green-800' 
+              : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            <div className="flex items-center gap-2">
+              {toastType === 'success' ? (
+                <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              ) : (
+                <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              )}
+              <span className="font-medium">{toastMessage}</span>
+              <button 
+                onClick={() => setShowToast(false)}
+                className="ml-4 hover:opacity-70"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
