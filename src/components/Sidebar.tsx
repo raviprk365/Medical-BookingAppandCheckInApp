@@ -55,13 +55,13 @@ const menuItems = [
     description: 'Queue management',
     badgeKey: 'waitingPatients'
   },
-  {
-    href: '/staff/dashboard/messages',
-    icon: MessageSquare,
-    label: 'Messages',
-    description: 'Patient communications',
-    badgeKey: 'unreadCount'
-  },
+  // {
+  //   href: '/staff/dashboard/messages',
+  //   icon: MessageSquare,
+  //   label: 'Messages',
+  //   description: 'Patient communications',
+  //   badgeKey: 'unreadCount'
+  // },
   {
     href: '/staff/dashboard/settings',
     icon: Settings,

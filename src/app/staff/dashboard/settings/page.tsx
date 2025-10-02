@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSession, signOut } from 'next-auth/react';
 import { Sidebar } from '@/components/Sidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -99,6 +100,7 @@ const timeOptions = Array.from({ length: 48 }, (_, i) => {
 });
 
 export default function SettingsPage() {
+  const { data: session } = useSession();
   const [availability, setAvailability] = useState<AvailabilityData>(defaultAvailability);
   const [breaks, setBreaks] = useState<Break[]>(defaultBreaks);
   const [exceptions, setExceptions] = useState<Exception[]>([]);
@@ -117,6 +119,46 @@ export default function SettingsPage() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load existing settings from database
+  useEffect(() => {
+    const loadSettings = async () => {
+      if (!session?.user) return;
+      
+      setIsLoading(true);
+      try {
+        const practitionerId = (session.user as any)?.practitionerId || 'prac-1';
+        console.log('📖 Loading settings for practitioner:', practitionerId);
+        
+        const response = await fetch(`/api/practitioners/${practitionerId}/settings`);
+        
+        if (response.ok) {
+          const result = await response.json();
+          console.log('✅ Settings loaded from database:', result.data);
+          
+          if (result.data.availability) {
+            setAvailability(result.data.availability);
+          }
+          if (result.data.breaks) {
+            setBreaks(result.data.breaks);
+          }
+          if (result.data.exceptions) {
+            setExceptions(result.data.exceptions);
+          }
+        } else {
+          console.log('⚠️ No existing settings found, using defaults');
+        }
+      } catch (error) {
+        console.error('❌ Error loading settings:', error);
+        // Continue with default settings
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSettings();
+  }, [session]);
 
   const dayNames: Record<DayOfWeek, string> = {
     monday: 'Monday',
@@ -134,7 +176,7 @@ export default function SettingsPage() {
       [day]: {
         ...prev[day],
         enabled,
-        sessions: enabled ? (prev[day].sessions.length === 0 ? [{ start: '09:00', end: '17:00' }] : prev[day].sessions) : []
+        sessions: enabled ? ((prev[day]?.sessions?.length || 0) === 0 ? [{ start: '09:00', end: '17:00' }] : prev[day]?.sessions || []) : []
       }
     }));
   };
@@ -144,7 +186,7 @@ export default function SettingsPage() {
       ...prev,
       [day]: {
         ...prev[day],
-        sessions: prev[day].sessions.map((session, index) =>
+        sessions: (prev[day]?.sessions || []).map((session, index) =>
           index === sessionIndex ? { ...session, [field]: value } : session
         )
       }
@@ -156,7 +198,7 @@ export default function SettingsPage() {
       ...prev,
       [day]: {
         ...prev[day],
-        sessions: [...prev[day].sessions, { start: '09:00', end: '17:00' }]
+        sessions: [...(prev[day]?.sessions || []), { start: '09:00', end: '17:00' }]
       }
     }));
   };
@@ -166,7 +208,7 @@ export default function SettingsPage() {
       ...prev,
       [day]: {
         ...prev[day],
-        sessions: prev[day].sessions.filter((_, index) => index !== sessionIndex)
+        sessions: (prev[day]?.sessions || []).filter((_, index) => index !== sessionIndex)
       }
     }));
   };
@@ -226,20 +268,53 @@ export default function SettingsPage() {
   const saveSettings = async () => {
     setIsSaving(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Get the practitioner ID from session
+      const practitionerId = (session?.user as any)?.practitionerId || 'prac-1';
       
-      // Here you would typically save to your backend:
-      // await saveSettingsToAPI({ availability, breaks, exceptions });
+      console.log('🔄 Saving settings for practitioner:', practitionerId);
       
-      console.log('Saving availability settings:', { availability, breaks, exceptions });
-      showToastMessage('Settings saved successfully!', 'success');
+      const response = await fetch(`/api/practitioners/${practitionerId}/settings`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          availability,
+          breaks,
+          exceptions
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save settings');
+      }
+
+      const result = await response.json();
+      console.log('✅ Settings saved to database:', result);
+      showToastMessage('Settings saved successfully to database!', 'success');
     } catch (error) {
-      showToastMessage('Failed to save settings. Please try again.', 'error');
+      console.error('❌ Error saving settings:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save settings';
+      showToastMessage(`Failed to save settings: ${errorMessage}`, 'error');
     } finally {
       setIsSaving(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex bg-gray-50">
+        <Sidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+            <p className="text-gray-600">Loading settings...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex bg-gray-50">
@@ -257,8 +332,16 @@ export default function SettingsPage() {
               <p className="text-gray-600 mt-1">
                 Manage your availability, preferences, and system settings
               </p>
+              {session && (
+                <div className="mt-2 text-xs text-gray-500">
+                  Debug: User ID: {session.user.id} | Role: {session.user.role} | PractitionerId: {(session.user as any).practitionerId || 'undefined'}
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-3">
+              <Button variant="outline" onClick={() => signOut()}>
+                Logout & Refresh Session
+              </Button>
               <Button variant="outline" onClick={copyWeek}>
                 <Copy className="h-4 w-4 mr-2" />
                 Copy Week
@@ -335,7 +418,7 @@ export default function SettingsPage() {
                       
                       {availability[day]?.enabled && (
                         <div className="space-y-3">
-                          {availability[day].sessions.map((session, sessionIndex) => (
+                          {(availability[day]?.sessions || []).map((session, sessionIndex) => (
                             <div key={sessionIndex} className="flex items-center gap-3">
                               <Select
                                 value={session.start}
@@ -367,7 +450,7 @@ export default function SettingsPage() {
                                 </SelectContent>
                               </Select>
                               
-                              {availability[day].sessions.length > 1 && (
+                              {(availability[day]?.sessions?.length || 0) > 1 && (
                                 <Button
                                   variant="outline"
                                   size="sm"

@@ -64,6 +64,27 @@
       },
       "createdAt": "2024-03-05T09:15:00Z",
       "updatedAt": "2024-03-05T09:15:00Z"
+    },
+    {
+      "firstName": "Varalakshmi",
+      "lastName": "Bhaskara",
+      "dateOfBirth": "1990-10-15",
+      "phone": "7799460204",
+      "email": "varalakshmibskr@gmail.com",
+      "address": "",
+      "emergencyContact": {
+        "name": "",
+        "phone": "",
+        "relationship": ""
+      },
+      "medicalHistory": {
+        "allergies": "",
+        "medications": "",
+        "conditions": []
+      },
+      "id": "patient-1759385437734-t6jcfw4pdv",
+      "createdAt": "2025-10-02T06:10:37.733Z",
+      "updatedAt": "2025-10-02T08:01:03.215Z"
     }
   ],
   "appointments": [
@@ -198,6 +219,50 @@
       "confirmationCode": "APT2H3BAT",
       "createdAt": "2025-10-01T09:07:43.166Z",
       "updatedAt": "2025-10-01T09:07:43.166Z"
+    },
+    {
+      "patientId": "patient-1759385437734-t6jcfw4pdv",
+      "practitionerId": "prac-1",
+      "clinicId": "clinic-1",
+      "appointmentDate": "2025-10-02",
+      "appointmentTime": "3:30 pm",
+      "duration": 30,
+      "appointmentType": "general-consultation",
+      "reason": "reason updated",
+      "urgency": "routine",
+      "status": "confirmed",
+      "notes": "",
+      "medications": "",
+      "allergies": "",
+      "symptoms": "",
+      "bookingFor": "myself",
+      "relationship": "",
+      "id": "apt-1759385437769-znf4h9gwnx",
+      "confirmationCode": "APTD0HZAZ",
+      "createdAt": "2025-10-02T06:10:37.769Z",
+      "updatedAt": "2025-10-02T06:10:37.769Z"
+    },
+    {
+      "patientId": "patient-1759385437734-t6jcfw4pdv",
+      "practitionerId": "prac-1",
+      "clinicId": "clinic-1",
+      "appointmentDate": "2025-10-03",
+      "appointmentTime": "9:30 am",
+      "duration": 20,
+      "appointmentType": "follow-up",
+      "reason": "revisit",
+      "urgency": "routine",
+      "status": "confirmed",
+      "notes": "",
+      "medications": "",
+      "allergies": "",
+      "symptoms": "",
+      "bookingFor": "myself",
+      "relationship": "",
+      "id": "apt-1759392063279-h6zaaavbk5",
+      "confirmationCode": "APT965VJQ",
+      "createdAt": "2025-10-02T08:01:03.278Z",
+      "updatedAt": "2025-10-02T08:01:03.278Z"
     }
   ],
   "clinics": [
@@ -342,52 +407,208 @@
         "telehealth"
       ],
       "availability": {
-        "monday": [
-          {
+        "monday": {
+          "0": {
             "start": "09:00",
             "end": "11:00"
           },
-          {
+          "1": {
             "start": "14:00",
             "end": "16:00"
           },
-          {
+          "2": {
             "start": "17:00",
             "end": "19:00"
-          }
-        ],
-        "tuesday": [
-          {
+          },
+          "enabled": true,
+          "sessions": [
+            {
+              "start": "09:00",
+              "end": "17:00"
+            }
+          ]
+        },
+        "tuesday": {
+          "0": {
             "start": "09:00",
             "end": "11:00"
           },
-          {
+          "1": {
             "start": "14:00",
             "end": "16:00"
-          }
-        ],
-        "wednesday": [
-          {
-            "start": "09:00",
-            "end": "12:00"
-          }
-        ],
-        "thursday": [
-          {
-            "start": "14:00",
-            "end": "19:00"
-          }
-        ],
-        "friday": [
-          {
+          },
+          "enabled": true,
+          "sessions": [
+            {
+              "start": "09:00",
+              "end": "17:00"
+            }
+          ]
+        },
+        "wednesday": {
+          "0": {
             "start": "09:00",
             "end": "12:00"
           },
-          {
+          "enabled": true,
+          "sessions": [
+            {
+              "start": "09:00",
+              "end": "17:00"
+            }
+          ]
+        },
+        "thursday": {
+          "0": {
+            "start": "14:00",
+            "end": "19:00"
+          },
+          "enabled": true,
+          "sessions": [
+            {
+              "start": "09:00",
+              "end": "17:00"
+            }
+          ]
+        },
+        "friday": {
+          "0": {
+            "start": "09:00",
+            "end": "12:00"
+          },
+          "1": {
             "start": "14:00",
             "end": "16:00"
+          },
+          "enabled": true,
+          "sessions": [
+            {
+              "start": "09:00",
+              "end": "17:00"
+            }
+          ]
+        },
+        "saturday": {
+          "enabled": false,
+          "sessions": []
+        }
+      },
+      "settings": {
+        "availability": {
+          "monday": {
+            "0": {
+              "start": "09:00",
+              "end": "11:00"
+            },
+            "1": {
+              "start": "14:00",
+              "end": "16:00"
+            },
+            "2": {
+              "start": "17:00",
+              "end": "19:00"
+            },
+            "enabled": true,
+            "sessions": [
+              {
+                "start": "09:00",
+                "end": "17:00"
+              }
+            ]
+          },
+          "tuesday": {
+            "0": {
+              "start": "09:00",
+              "end": "11:00"
+            },
+            "1": {
+              "start": "14:00",
+              "end": "16:00"
+            },
+            "enabled": true,
+            "sessions": [
+              {
+                "start": "09:00",
+                "end": "17:00"
+              }
+            ]
+          },
+          "wednesday": {
+            "0": {
+              "start": "09:00",
+              "end": "12:00"
+            },
+            "enabled": true,
+            "sessions": [
+              {
+                "start": "09:00",
+                "end": "17:00"
+              }
+            ]
+          },
+          "thursday": {
+            "0": {
+              "start": "14:00",
+              "end": "19:00"
+            },
+            "enabled": true,
+            "sessions": [
+              {
+                "start": "09:00",
+                "end": "17:00"
+              }
+            ]
+          },
+          "friday": {
+            "0": {
+              "start": "09:00",
+              "end": "12:00"
+            },
+            "1": {
+              "start": "14:00",
+              "end": "16:00"
+            },
+            "enabled": true,
+            "sessions": [
+              {
+                "start": "09:00",
+                "end": "17:00"
+              }
+            ]
+          },
+          "saturday": {
+            "enabled": false,
+            "sessions": []
           }
-        ]
+        },
+        "breaks": [
+          {
+            "name": "Lunch Break",
+            "start": "12:30",
+            "end": "13:00",
+            "days": [
+              "monday",
+              "wednesday",
+              "tuesday",
+              "thursday",
+              "friday"
+            ],
+            "id": "1759386611631"
+          }
+        ],
+        "exceptions": [
+          {
+            "date": "2025-10-03",
+            "type": "meeting",
+            "name": "Meeting",
+            "reason": "",
+            "startTime": "11:00",
+            "endTime": "11:30",
+            "id": "1759386636351"
+          }
+        ],
+        "updatedAt": "2025-10-02T06:30:40.334Z",
+        "updatedBy": "user-2"
       }
     },
     {
@@ -886,6 +1107,95 @@
         "send_messages",
         "view_reports"
       ],
+      "createdAt": "2025-01-01T00:00:00Z"
+    }
+  ],
+  "users": [
+    {
+      "id": "user-1",
+      "email": "admin@sydneymed.com",
+      "name": "Admin User",
+      "password": "$2b$12$Iqe8ummXQP5Y9kEdqP0tB.Aw0VduhSxR3sMnYoEbw6x9NdM7jOK96",
+      "role": "admin",
+      "clinicId": "clinic-1",
+      "createdAt": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": "user-2",
+      "email": "sarah.chen@sydneymed.com",
+      "name": "Dr. Sarah Chen",
+      "password": "$2b$12$Iqe8ummXQP5Y9kEdqP0tB.Aw0VduhSxR3sMnYoEbw6x9NdM7jOK96",
+      "role": "doctor",
+      "clinicId": "clinic-1",
+      "practitionerId": "prac-1",
+      "createdAt": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": "user-3",
+      "email": "james.mitchell@sydneymed.com",
+      "name": "Dr. James Mitchell",
+      "password": "$2b$12$Iqe8ummXQP5Y9kEdqP0tB.Aw0VduhSxR3sMnYoEbw6x9NdM7jOK96",
+      "role": "doctor",
+      "clinicId": "clinic-1",
+      "practitionerId": "prac-2",
+      "createdAt": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": "user-4",
+      "email": "emily.watson@sydneymed.com",
+      "name": "Dr. Emily Watson",
+      "password": "$2b$12$Iqe8ummXQP5Y9kEdqP0tB.Aw0VduhSxR3sMnYoEbw6x9NdM7jOK96",
+      "role": "doctor",
+      "clinicId": "clinic-2",
+      "practitionerId": "prac-3",
+      "createdAt": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": "user-5",
+      "email": "michael.nguyen@sydneymed.com",
+      "name": "Dr. Michael Nguyen",
+      "password": "$2b$12$Iqe8ummXQP5Y9kEdqP0tB.Aw0VduhSxR3sMnYoEbw6x9NdM7jOK96",
+      "role": "doctor",
+      "clinicId": "clinic-2",
+      "practitionerId": "prac-4",
+      "createdAt": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": "user-6",
+      "email": "priya.sharma@sydneymed.com",
+      "name": "Dr. Priya Sharma",
+      "password": "$2b$12$Iqe8ummXQP5Y9kEdqP0tB.Aw0VduhSxR3sMnYoEbw6x9NdM7jOK96",
+      "role": "doctor",
+      "clinicId": "clinic-3",
+      "practitionerId": "prac-5",
+      "createdAt": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": "user-7",
+      "email": "robert.taylor@sydneymed.com",
+      "name": "Dr. Robert Taylor",
+      "password": "$2b$12$Iqe8ummXQP5Y9kEdqP0tB.Aw0VduhSxR3sMnYoEbw6x9NdM7jOK96",
+      "role": "doctor",
+      "clinicId": "clinic-3",
+      "practitionerId": "prac-6",
+      "createdAt": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": "user-8",
+      "email": "reception@sydneymed.com",
+      "name": "Reception Staff",
+      "password": "$2b$12$Iqe8ummXQP5Y9kEdqP0tB.Aw0VduhSxR3sMnYoEbw6x9NdM7jOK96",
+      "role": "staff",
+      "clinicId": "clinic-1",
+      "createdAt": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": "user-9",
+      "email": "nurse@sydneymed.com",
+      "name": "Nurse Jennifer",
+      "password": "$2b$12$Iqe8ummXQP5Y9kEdqP0tB.Aw0VduhSxR3sMnYoEbw6x9NdM7jOK96",
+      "role": "nurse",
+      "clinicId": "clinic-1",
       "createdAt": "2025-01-01T00:00:00Z"
     }
   ],
