@@ -165,16 +165,7 @@ export default function SignInPage() {
               </Button>
             </form>
 
-            {/* Test Credentials Helper */}
-            <div className="text-xs text-muted-foreground bg-gray-50 p-3 rounded-md">
-              <p className="font-medium mb-2">Test Staff Credentials:</p>
-              <div className="space-y-1">
-                <p><strong>Admin:</strong> admin@sydneymed.com / password123</p>
-                <p><strong>Practitioner:</strong> doctor@sydneymed.com / password123</p>
-                <p><strong>Nurse:</strong> nurse@sydneymed.com / password123</p>
-                <p><strong>Staff:</strong> reception@sydneymed.com / password123</p>
-              </div>
-            </div>
+           
           </CardContent>
         </Card>
       </main>

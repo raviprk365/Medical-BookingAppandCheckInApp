@@ -55,7 +55,7 @@ export interface WaitingPatient {
  * @returns boolean indicating if user has full access
  */
 export const canViewAllPractitioners = (userRole: string): boolean => {
-  const adminRoles = ['admin', 'staff', 'nurse', 'administrator'];
+  const adminRoles = ['admin', 'staff', 'nurse'];
   return adminRoles.includes(userRole.toLowerCase());
 };
 

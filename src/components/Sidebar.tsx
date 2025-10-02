@@ -28,47 +28,89 @@ interface SidebarProps {
   className?: string;
 }
 
-const menuItems = [
-  {
-    href: '/staff/dashboard',
-    icon: LayoutDashboard,
-    label: 'Dashboard',
-    description: 'Overview & quick access'
-  },
-  {
-    href: '/staff/dashboard/today',
-    icon: CalendarDays,
-    label: 'Today\'s Appointments',
-    description: 'View today\'s schedule',
-    badgeKey: 'todaysAppointments'
-  },
-  {
-    href: '/staff/dashboard/calendar',
-    icon: Calendar,
-    label: 'Calendar',
-    description: 'Schedule management'
-  },
-  {
-    href: '/staff/dashboard/waiting',
-    icon: Clock,
-    label: 'Waiting',
-    description: 'Queue management',
-    badgeKey: 'waitingPatients'
-  },
-  // {
-  //   href: '/staff/dashboard/messages',
-  //   icon: MessageSquare,
-  //   label: 'Messages',
-  //   description: 'Patient communications',
-  //   badgeKey: 'unreadCount'
-  // },
-  {
-    href: '/staff/dashboard/settings',
-    icon: Settings,
-    label: 'Settings',
-    description: 'Availability & preferences'
+// Role-based menu items
+const getMenuItems = (userRole?: string) => {
+  const isAdmin = userRole === 'admin';
+  const baseRoute = isAdmin ? '/admin' : '/staff';
+  
+  if (isAdmin) {
+    return [
+      {
+        href: '/admin/dashboard',
+        icon: LayoutDashboard,
+        label: 'Dashboard',
+        description: 'System overview & management'
+      },
+      {
+        href: '/admin/dashboard/practitioners',
+        icon: Users,
+        label: 'Practitioners',
+        description: 'Manage staff & doctors'
+      },
+      {
+        href: '/admin/dashboard/appointments',
+        icon: CalendarDays,
+        label: 'All Appointments',
+        description: 'System-wide appointments',
+        badgeKey: 'todaysAppointments'
+      },
+      {
+        href: '/admin/dashboard/calendar',
+        icon: Calendar,
+        label: 'Master Calendar',
+        description: 'Clinic-wide schedule'
+      },
+      {
+        href: '/admin/dashboard/reports',
+        icon: Clock,
+        label: 'Reports',
+        description: 'Analytics & insights'
+      },
+      {
+        href: '/admin/dashboard/settings',
+        icon: Settings,
+        label: 'System Settings',
+        description: 'Configuration & preferences'
+      }
+    ];
   }
-];
+  
+  // Staff/Practitioner menu
+  return [
+    {
+      href: '/staff/dashboard',
+      icon: LayoutDashboard,
+      label: 'Dashboard',
+      description: 'Overview & quick access'
+    },
+    {
+      href: '/staff/dashboard/today',
+      icon: CalendarDays,
+      label: 'Today\'s Appointments',
+      description: 'View today\'s schedule',
+      badgeKey: 'todaysAppointments'
+    },
+    {
+      href: '/staff/dashboard/calendar',
+      icon: Calendar,
+      label: 'Calendar',
+      description: 'Schedule management'
+    },
+    {
+      href: '/staff/dashboard/waiting',
+      icon: Clock,
+      label: 'Waiting',
+      description: 'Queue management',
+      badgeKey: 'waitingPatients'
+    },
+    {
+      href: '/staff/dashboard/settings',
+      icon: Settings,
+      label: 'Settings',
+      description: 'Availability & preferences'
+    }
+  ];
+};
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
@@ -129,7 +171,9 @@ export function Sidebar({ className }: SidebarProps) {
             </div>
             <div>
               <h2 className="font-semibold text-gray-900 text-sm">Sydney Med</h2>
-              <p className="text-xs text-gray-500">Staff Portal</p>
+              <p className="text-xs text-gray-500">
+                {user?.role === 'admin' ? 'Admin Portal' : 'Staff Portal'}
+              </p>
             </div>
           </div>
         )}
@@ -163,7 +207,7 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 p-2">
         <ul className="space-y-1">
-          {menuItems.map((item) => {
+          {getMenuItems(user?.role).map((item) => {
             const isActive = pathname === item.href;
             const isNavigating = navigatingTo === item.href;
             const Icon = item.icon;

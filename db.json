@@ -1099,7 +1099,7 @@
       "firstName": "Admin",
       "lastName": "User",
       "email": "admin@medicalbooking.com",
-      "role": "administrator",
+      "role": "admin",
       "clinicId": "clinic-1",
       "permissions": [
         "view_patients",

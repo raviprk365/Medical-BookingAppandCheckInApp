@@ -703,16 +703,6 @@ export default function SettingsPage() {
                           />
                         </div>
 
-                        <div className="bg-blue-50 p-3 rounded-lg">
-                          <h4 className="text-sm font-medium text-blue-900 mb-1">Quick Examples:</h4>
-                          <ul className="text-xs text-blue-800 space-y-1">
-                            <li>• <strong>Meeting:</strong> "Medical Conference" 9:00 AM - 5:00 PM</li>
-                            <li>• <strong>Break:</strong> "Extended Lunch - Dentist" 12:00 PM - 2:00 PM</li>
-                            <li>• <strong>Day Off:</strong> "Vacation Day" (entire day blocked)</li>
-                            <li>• <strong>Custom Hours:</strong> "Half Day" 9:00 AM - 1:00 PM only</li>
-                          </ul>
-                        </div>
-
                         <div className="flex gap-2">
                           <Button onClick={addException} className="flex-1" disabled={!newException.date || !newException.name}>
                             Add {newException.type === 'meeting' ? 'Meeting' : newException.type === 'break' ? 'Break' : 'Exception'}
